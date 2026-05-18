@@ -19,6 +19,7 @@ export function subscribeFoodLogsByDate(
     (snapshot) => {
       const logs = snapshot.docs
         .map((item) => ({ id: item.id, ...item.data() }) as FoodLog)
+        .filter((log) => log.entryType !== "water")
         .sort((a, b) => b.consumedAt.toMillis() - a.consumedAt.toMillis());
       onNext(logs);
     },
@@ -34,7 +35,13 @@ export function subscribeFoodLogsFromDate(
 ) {
   return onSnapshot(
     query(foodLogsCollection(uid), where("dateKey", ">=", startDateKey), orderBy("dateKey", "asc")),
-    (snapshot) => onNext(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as FoodLog)),
+    (snapshot) => {
+      onNext(
+        snapshot.docs
+          .map((item) => ({ id: item.id, ...item.data() }) as FoodLog)
+          .filter((log) => log.entryType !== "water"),
+      );
+    },
     onError,
   );
 }
@@ -42,6 +49,7 @@ export function subscribeFoodLogsFromDate(
 export async function createFoodLog(uid: string, food: Food, grams: number, dateKey = getTodayDateKey()) {
   const macros = calculateMacroFromFood(food, grams);
   await addDoc(foodLogsCollection(uid), {
+    entryType: "food",
     dateKey,
     consumedAt: Timestamp.now(),
     foodId: food.id,

@@ -36,6 +36,8 @@ export function FoodForm({ editingFood, onSubmit, onCancel }: FoodFormProps) {
       carbPer100g: 0,
     },
   });
+  const fatField = register("fatPer100g");
+  const carbField = register("carbPer100g");
 
   useEffect(() => {
     if (editingFood) reset(editingFood);
@@ -53,8 +55,30 @@ export function FoodForm({ editingFood, onSubmit, onCancel }: FoodFormProps) {
       <div className="grid gap-3 sm:grid-cols-2">
         <Input label="Kalori / 100 g" type="number" step="0.1" error={errors.caloriesPer100g?.message} {...register("caloriesPer100g")} />
         <Input label="Protein / 100 g" type="number" step="0.1" error={errors.proteinPer100g?.message} {...register("proteinPer100g")} />
-        <Input label="Yağ / 100 g" type="number" step="0.1" error={errors.fatPer100g?.message} {...register("fatPer100g")} />
-        <Input label="Karbonhidrat / 100 g" type="number" step="0.1" error={errors.carbPer100g?.message} {...register("carbPer100g")} />
+        <Input
+          label="Yağ / 100 g"
+          type="number"
+          step="0.1"
+          error={errors.fatPer100g?.message}
+          {...fatField}
+          onFocus={(event) => {
+            if (event.currentTarget.value === "0") {
+              event.currentTarget.value = "";
+            }
+          }}
+        />
+        <Input
+          label="Karbonhidrat / 100 g"
+          type="number"
+          step="0.1"
+          error={errors.carbPer100g?.message}
+          {...carbField}
+          onFocus={(event) => {
+            if (event.currentTarget.value === "0") {
+              event.currentTarget.value = "";
+            }
+          }}
+        />
       </div>
       <div className="flex flex-wrap gap-2">
         <Button loading={isSubmitting}>{editingFood ? "Güncelle" : "Kaydet"}</Button>

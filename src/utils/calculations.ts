@@ -26,6 +26,10 @@ export function calculateMinCarbTarget(currentWeight: number) {
   return roundOne(currentWeight);
 }
 
+export function calculateDailyWaterTargetLiter(currentWeight: number) {
+  return roundOne(currentWeight / 25);
+}
+
 export function calculateTargets(currentWeight: number, targetWeight: number) {
   const averageBurnKcal = calculateAverageBurnKcal(currentWeight);
   const dailyCalorieTarget = calculateDailyCalorieTarget(currentWeight, targetWeight);
@@ -65,4 +69,8 @@ export function sumDailyTotals<T extends DailyTotals>(items: T[]): DailyTotals {
     }),
     { calories: 0, protein: 0, fat: 0, carbs: 0 },
   );
+}
+
+export function sumWaterMilliliters<T extends { milliliters: number }>(items: T[]) {
+  return items.reduce((total, item) => total + item.milliliters, 0);
 }

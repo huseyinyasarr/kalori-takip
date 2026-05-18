@@ -23,6 +23,7 @@ export interface UserProfile {
 
 export interface Food {
   id: string;
+  entryType?: "food" | "waterGlass";
   name: string;
   caloriesPer100g: number;
   proteinPer100g: number;
@@ -36,6 +37,7 @@ export type FoodInput = Omit<Food, "id" | "createdAt" | "updatedAt">;
 
 export interface FoodLog {
   id: string;
+  entryType?: "food" | "water";
   dateKey: string;
   consumedAt: Timestamp;
   foodId: string;
@@ -45,6 +47,32 @@ export interface FoodLog {
   protein: number;
   fat: number;
   carbs: number;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface WaterGlass {
+  id: string;
+  entryType: "waterGlass";
+  name: string;
+  milliliters: number;
+  size?: WaterGlassSize;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type WaterGlassSize = "small" | "medium" | "large";
+
+export type WaterGlassInput = Omit<WaterGlass, "id" | "entryType" | "createdAt" | "updatedAt">;
+
+export interface WaterLog {
+  id: string;
+  entryType: "water";
+  dateKey: string;
+  consumedAt: Timestamp;
+  glassId: string;
+  glassNameSnapshot: string;
+  milliliters: number;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

@@ -20,7 +20,11 @@ export function subscribeFoods(uid: string, onNext: (foods: Food[]) => void, onE
   return onSnapshot(
     query(foodsCollection(uid), orderBy("name", "asc")),
     (snapshot) => {
-      onNext(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Food));
+      onNext(
+        snapshot.docs
+          .map((item) => ({ id: item.id, ...item.data() }) as Food)
+          .filter((food) => food.entryType !== "waterGlass"),
+      );
     },
     onError,
   );
@@ -29,6 +33,7 @@ export function subscribeFoods(uid: string, onNext: (foods: Food[]) => void, onE
 export async function createFood(uid: string, payload: FoodInput) {
   await addDoc(foodsCollection(uid), {
     ...payload,
+    entryType: "food",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
