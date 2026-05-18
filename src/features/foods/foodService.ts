@@ -23,7 +23,7 @@ export function subscribeFoods(uid: string, onNext: (foods: Food[]) => void, onE
       onNext(
         snapshot.docs
           .map((item) => ({ id: item.id, ...item.data() }) as Food)
-          .filter((food) => food.entryType !== "waterGlass"),
+          .filter((food) => food.entryType !== "waterGlass" && food.entryType !== "plate"),
       );
     },
     onError,

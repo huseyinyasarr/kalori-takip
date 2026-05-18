@@ -12,7 +12,12 @@ const schema = z.object({
   grams: z.coerce.number().positive("Gram pozitif sayı olmalı."),
 });
 
-export function AddFoodLogForm({ foods, onAdd }: { foods: Food[]; onAdd: (food: Food, grams: number) => Promise<void> }) {
+interface AddFoodLogFormProps {
+  foods: Food[];
+  onAdd: (food: Food, grams: number) => Promise<void>;
+}
+
+export function AddFoodLogForm({ foods, onAdd }: AddFoodLogFormProps) {
   const [foodSearch, setFoodSearch] = useState("");
   const [isFoodPickerOpen, setIsFoodPickerOpen] = useState(false);
   const {
@@ -81,6 +86,7 @@ export function AddFoodLogForm({ foods, onAdd }: { foods: Food[]; onAdd: (food: 
                   onClick={() => {
                     setFoodSearch(food.name);
                     setValue("foodId", food.id, { shouldDirty: true, shouldValidate: true });
+                    setValue("grams", 100, { shouldDirty: true });
                     setIsFoodPickerOpen(false);
                   }}
                 >

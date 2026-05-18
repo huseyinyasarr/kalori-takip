@@ -7,6 +7,7 @@ import { FoodsPage } from "./routes/FoodsPage";
 import { HistoryPage } from "./routes/HistoryPage";
 import { LoginPage } from "./routes/LoginPage";
 import { OnboardingPage } from "./routes/OnboardingPage";
+import { PlatesPage } from "./routes/PlatesPage";
 import { OnboardingRoute, ProtectedRoute, PublicOnlyRoute } from "./routes/ProtectedRoute";
 import { SettingsPage } from "./routes/SettingsPage";
 import { SummaryPage } from "./routes/SummaryPage";
@@ -27,6 +28,7 @@ export function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/foods" element={<FoodsPage />} />
+                <Route path="/plates" element={<PlatesPage />} />
                 <Route path="/summary" element={<SummaryPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

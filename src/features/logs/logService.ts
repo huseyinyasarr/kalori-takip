@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import type { Food, FoodLog } from "../../types";
+import type { Food, FoodLog, Plate } from "../../types";
 import { calculateMacroFromFood } from "../../utils/calculations";
 import { getTodayDateKey } from "../../utils/date";
 
@@ -59,6 +59,23 @@ export async function createFoodLog(uid: string, food: Food, grams: number, date
     protein: macros.protein,
     fat: macros.fat,
     carbs: macros.carbs,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function createPlateLog(uid: string, plate: Plate, portions: number, dateKey = getTodayDateKey()) {
+  await addDoc(foodLogsCollection(uid), {
+    entryType: "food",
+    dateKey,
+    consumedAt: Timestamp.now(),
+    foodId: `plate:${plate.id}`,
+    foodNameSnapshot: plate.name,
+    grams: Math.round(plate.totalGrams * portions * 10) / 10,
+    calories: Math.round(plate.calories * portions),
+    protein: Math.round(plate.protein * portions * 10) / 10,
+    fat: Math.round(plate.fat * portions * 10) / 10,
+    carbs: Math.round(plate.carbs * portions * 10) / 10,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

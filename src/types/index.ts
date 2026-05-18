@@ -23,7 +23,7 @@ export interface UserProfile {
 
 export interface Food {
   id: string;
-  entryType?: "food" | "waterGlass";
+  entryType?: "food" | "waterGlass" | "plate";
   name: string;
   caloriesPer100g: number;
   proteinPer100g: number;
@@ -34,6 +34,24 @@ export interface Food {
 }
 
 export type FoodInput = Omit<Food, "id" | "createdAt" | "updatedAt">;
+
+export interface PlateIngredient extends DailyTotals {
+  foodId: string;
+  foodNameSnapshot: string;
+  grams: number;
+}
+
+export interface Plate extends DailyTotals {
+  id: string;
+  entryType?: "plate";
+  name: string;
+  ingredients: PlateIngredient[];
+  totalGrams: number;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type PlateInput = Omit<Plate, "id" | "createdAt" | "updatedAt">;
 
 export interface FoodLog {
   id: string;

@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Home, LogOut, Salad, Settings, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Home, LogOut, Salad, Settings, Utensils, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { logout } from "../../lib/firebase";
 import { useProfile } from "../../features/profile/ProfileContext";
@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 const navItems = [
   { to: "/", label: "Dashboard", icon: Home },
   { to: "/foods", label: "Yemekler", icon: Salad },
+  { to: "/plates", label: "Tabak", icon: Utensils },
   { to: "/summary", label: "Özet", icon: BarChart3 },
   { to: "/history", label: "Geçmiş", icon: CalendarDays },
   { to: "/settings", label: "Ayarlar", icon: Settings },
@@ -24,7 +25,7 @@ export function AppLayout() {
           <p className="text-xl font-black text-ink">Kalori Takip</p>
           <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
         </div>
-        <nav className="grid grid-cols-5 gap-1 p-2 md:grid-cols-1 md:px-3">
+        <nav className="grid grid-cols-6 gap-1 p-2 md:grid-cols-1 md:px-3">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

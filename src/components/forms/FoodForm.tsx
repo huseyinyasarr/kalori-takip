@@ -36,6 +36,8 @@ export function FoodForm({ editingFood, onSubmit, onCancel }: FoodFormProps) {
       carbPer100g: 0,
     },
   });
+  const caloriesField = register("caloriesPer100g");
+  const proteinField = register("proteinPer100g");
   const fatField = register("fatPer100g");
   const carbField = register("carbPer100g");
 
@@ -53,8 +55,30 @@ export function FoodForm({ editingFood, onSubmit, onCancel }: FoodFormProps) {
     >
       <Input label="Yemek/besin adı" error={errors.name?.message} {...register("name")} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input label="Kalori / 100 g" type="number" step="0.1" error={errors.caloriesPer100g?.message} {...register("caloriesPer100g")} />
-        <Input label="Protein / 100 g" type="number" step="0.1" error={errors.proteinPer100g?.message} {...register("proteinPer100g")} />
+        <Input
+          label="Kalori / 100 g"
+          type="number"
+          step="0.1"
+          error={errors.caloriesPer100g?.message}
+          {...caloriesField}
+          onFocus={(event) => {
+            if (event.currentTarget.value === "0") {
+              event.currentTarget.value = "";
+            }
+          }}
+        />
+        <Input
+          label="Protein / 100 g"
+          type="number"
+          step="0.1"
+          error={errors.proteinPer100g?.message}
+          {...proteinField}
+          onFocus={(event) => {
+            if (event.currentTarget.value === "0") {
+              event.currentTarget.value = "";
+            }
+          }}
+        />
         <Input
           label="Yağ / 100 g"
           type="number"

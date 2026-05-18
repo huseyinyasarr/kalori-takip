@@ -21,6 +21,10 @@ service cloud.firestore {
         allow read, create, update, delete: if isOwner(userId);
       }
 
+      match /plates/{plateId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+
       match /weightLogs/{logId} {
         allow read, create, update, delete: if isOwner(userId);
       }

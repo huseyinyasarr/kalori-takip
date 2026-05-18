@@ -1,4 +1,4 @@
-import { Droplets, Edit2, GlassWater, Trash2 } from "lucide-react";
+import { Droplets, Edit2, GlassWater, Plus, Salad, Trash2, Utensils } from "lucide-react";
 import { useState } from "react";
 import { AddFoodLogForm } from "../components/forms/AddFoodLogForm";
 import { Button } from "../components/ui/Button";
@@ -7,16 +7,17 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Input } from "../components/ui/Input";
 import { ProgressRing } from "../components/ui/ProgressRing";
 import { useAuth } from "../features/auth/AuthContext";
-import { createFoodLog, deleteFoodLog, updateFoodLogGrams } from "../features/logs/logService";
+import { createFoodLog, createPlateLog, deleteFoodLog, updateFoodLogGrams } from "../features/logs/logService";
 import { submitDailyWeight } from "../features/profile/profileService";
 import { useProfile } from "../features/profile/ProfileContext";
 import { createWaterLog, deleteWaterLog } from "../features/water/waterService";
 import { useFoodLogsByDate } from "../hooks/useFoodLogs";
 import { useFoods } from "../hooks/useFoods";
+import { usePlates } from "../hooks/usePlates";
 import { useWaterGlasses, useWaterLogsByDate } from "../hooks/useWater";
-import { calculateDailyWaterTargetLiter, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import { calculateDailyWaterTargetLiter, calculateMacroFromFood, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 import { getTodayDateKey } from "../utils/date";
-import type { FoodLog, WaterGlassSize } from "../types";
+import type { Plate, PlateIngredient, FoodLog, WaterGlassSize } from "../types";
 
 const waterGlassIconSize: Record<WaterGlassSize, string> = {
   small: "h-7 w-7",
@@ -24,16 +25,36 @@ const waterGlassIconSize: Record<WaterGlassSize, string> = {
   large: "h-11 w-11",
 };
 
+function buildPlateSnapshot(plate: Plate, ingredients: PlateIngredient[]): Plate {
+  const totals = sumDailyTotals(ingredients);
+  const totalGrams = Math.round(ingredients.reduce((sum, item) => sum + item.grams, 0) * 10) / 10;
+
+  return {
+    ...plate,
+    name: `${plate.name} (bugünlük)`,
+    ingredients,
+    totalGrams,
+    ...totals,
+  };
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { foods } = useFoods();
+  const { plates } = usePlates();
   const todayDateKey = getTodayDateKey();
   const { glasses } = useWaterGlasses();
   const { logs, loading, error } = useFoodLogsByDate(todayDateKey);
   const { logs: waterLogs, loading: waterLoading, error: waterError } = useWaterLogsByDate(todayDateKey);
   const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
   const [addingWaterGlassId, setAddingWaterGlassId] = useState<string | null>(null);
+  const [addingPlateId, setAddingPlateId] = useState<string | null>(null);
+  const [platePortions, setPlatePortions] = useState<Record<string, string>>({});
+  const [customPlateId, setCustomPlateId] = useState<string | null>(null);
+  const [customPlateIngredients, setCustomPlateIngredients] = useState<Record<string, PlateIngredient[]>>({});
+  const [customFoodId, setCustomFoodId] = useState("");
+  const [customFoodGrams, setCustomFoodGrams] = useState("");
   const [grams, setGrams] = useState("");
   const [quickWeight, setQuickWeight] = useState("");
   const totals = sumDailyTotals(logs);
@@ -135,16 +156,243 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-        <Card>
-          <h3 className="text-lg font-bold text-ink">Yemek Ekle</h3>
-          <div className="mt-4">
-            {foods.length ? (
-              <AddFoodLogForm foods={foods} onAdd={(food, amount) => createFoodLog(user.uid, food, amount)} />
-            ) : (
-              <EmptyState title="Henüz yemek eklenmemiş" description="Yemekler sayfasından besin ekleyince burada tüketim kaydı oluşturabilirsin." />
-            )}
-          </div>
-        </Card>
+        <div className="grid gap-5">
+          <Card>
+            <div className="flex items-center gap-2">
+              <Salad className="h-5 w-5 text-leaf" />
+              <h3 className="text-lg font-bold text-ink">Yemek Ekle</h3>
+            </div>
+            <div className="mt-4">
+              {foods.length ? (
+                <AddFoodLogForm foods={foods} onAdd={(food, amount) => createFoodLog(user.uid, food, amount)} />
+              ) : (
+                <EmptyState title="Henüz yemek eklenmemiş" description="Yemekler sayfasından besin ekleyince burada tüketim kaydı oluşturabilirsin." />
+              )}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2">
+              <Utensils className="h-5 w-5 text-leaf" />
+              <h3 className="text-lg font-bold text-ink">Tabak Ekle</h3>
+            </div>
+            <div className="mt-4">
+              {plates.length ? (
+                <div className="max-h-72 overflow-y-auto rounded-md border border-ink/10">
+                  {plates.map((plate) => {
+                    const portionValue = platePortions[plate.id] ?? "1";
+                    const portion = Number(portionValue || 1);
+                    const isCustomizing = customPlateId === plate.id;
+                    const customIngredients = customPlateIngredients[plate.id] ?? plate.ingredients;
+                    const customPlate = buildPlateSnapshot(plate, customIngredients);
+                    const selectedCustomFood = foods.find((food) => food.id === customFoodId);
+
+                    return (
+                      <div key={plate.id} className="border-b border-ink/10 p-3 last:border-b-0">
+                        <div className="grid gap-3 md:grid-cols-[1fr_96px_auto_auto] md:items-center">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-ink">{plate.name}</p>
+                            <p className="text-xs text-ink/60">
+                              {plate.totalGrams} g · {plate.calories} kcal · P {plate.protein} · Y {plate.fat} · K {plate.carbs}
+                            </p>
+                          </div>
+                          <label className="block">
+                            <span className="mb-1 block text-xs font-medium text-ink/60 md:sr-only">Porsiyon</span>
+                            <input
+                              className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none transition focus:border-leaf focus:ring-2 focus:ring-mint"
+                              type="number"
+                              step="0.1"
+                              min="0.1"
+                              value={portionValue}
+                              onChange={(event) => setPlatePortions((current) => ({ ...current, [plate.id]: event.target.value }))}
+                              onFocus={(event) => {
+                                if (event.currentTarget.value === "1") {
+                                  setPlatePortions((current) => ({ ...current, [plate.id]: "" }));
+                                }
+                              }}
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            icon={<Edit2 className="h-4 w-4" />}
+                            className="px-3"
+                            onClick={() => {
+                              setCustomPlateId(isCustomizing ? null : plate.id);
+                              setCustomPlateIngredients((current) => ({
+                                ...current,
+                                [plate.id]: current[plate.id] ?? plate.ingredients.map((item) => ({ ...item })),
+                              }));
+                              setCustomFoodId("");
+                              setCustomFoodGrams("");
+                            }}
+                          >
+                            Düzenle
+                          </Button>
+                          <Button
+                            type="button"
+                            loading={addingPlateId === plate.id && !isCustomizing}
+                            icon={<Plus className="h-4 w-4" />}
+                            className="px-3"
+                            onClick={async () => {
+                              if (portion <= 0) return;
+                              setAddingPlateId(plate.id);
+                              try {
+                                await createPlateLog(user.uid, plate, portion);
+                                setPlatePortions((current) => ({ ...current, [plate.id]: "1" }));
+                              } finally {
+                                setAddingPlateId(null);
+                              }
+                            }}
+                          >
+                            Ekle
+                          </Button>
+                        </div>
+
+                        {isCustomizing ? (
+                          <div className="mt-3 grid gap-3 rounded-md bg-cloud p-3">
+                            <div className="grid gap-2">
+                              {customIngredients.map((item, index) => (
+                                <div key={`${item.foodId}-${index}`} className="grid gap-2 md:grid-cols-[1fr_96px_auto] md:items-end">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-ink">{item.foodNameSnapshot}</p>
+                                    <p className="text-xs text-ink/55">
+                                      {item.calories} kcal · P {item.protein} · Y {item.fat} · K {item.carbs}
+                                    </p>
+                                  </div>
+                                  <label className="block">
+                                    <span className="mb-1 block text-xs font-medium text-ink/60 md:sr-only">Gram</span>
+                                    <input
+                                      className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none transition focus:border-leaf focus:ring-2 focus:ring-mint"
+                                      type="number"
+                                      step="0.1"
+                                      min="0.1"
+                                      value={item.grams}
+                                      onChange={(event) => {
+                                        const nextGrams = Number(event.target.value);
+                                        setCustomPlateIngredients((current) => ({
+                                          ...current,
+                                          [plate.id]: customIngredients.map((ingredient, ingredientIndex) => {
+                                            if (ingredientIndex !== index) return ingredient;
+                                            const sourceFood = foods.find((food) => food.id === ingredient.foodId);
+                                            const macros = sourceFood
+                                              ? calculateMacroFromFood(sourceFood, nextGrams)
+                                              : {
+                                                  calories: Math.round((ingredient.calories / ingredient.grams) * nextGrams),
+                                                  protein: Math.round((ingredient.protein / ingredient.grams) * nextGrams * 10) / 10,
+                                                  fat: Math.round((ingredient.fat / ingredient.grams) * nextGrams * 10) / 10,
+                                                  carbs: Math.round((ingredient.carbs / ingredient.grams) * nextGrams * 10) / 10,
+                                                };
+
+                                            return { ...ingredient, grams: nextGrams, ...macros };
+                                          }),
+                                        }));
+                                      }}
+                                    />
+                                  </label>
+                                  <Button
+                                    type="button"
+                                    variant="danger"
+                                    className="px-3"
+                                    icon={<Trash2 className="h-4 w-4" />}
+                                    onClick={() =>
+                                      setCustomPlateIngredients((current) => ({
+                                        ...current,
+                                        [plate.id]: customIngredients.filter((_, ingredientIndex) => ingredientIndex !== index),
+                                      }))
+                                    }
+                                  >
+                                    Sil
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="grid gap-2 border-t border-ink/10 pt-3 md:grid-cols-[1fr_96px_auto] md:items-end">
+                              <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-ink/60">Besin ekle</span>
+                                <select
+                                  className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-mint"
+                                  value={customFoodId}
+                                  onChange={(event) => setCustomFoodId(event.target.value)}
+                                >
+                                  <option value="">Seç</option>
+                                  {foods.map((food) => (
+                                    <option key={food.id} value={food.id}>
+                                      {food.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <Input label="Gram" type="number" step="0.1" min="0.1" value={customFoodGrams} onChange={(event) => setCustomFoodGrams(event.target.value)} />
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                icon={<Plus className="h-4 w-4" />}
+                                className="px-3"
+                                onClick={() => {
+                                  const nextGrams = Number(customFoodGrams);
+                                  if (!selectedCustomFood || nextGrams <= 0) return;
+                                  setCustomPlateIngredients((current) => ({
+                                    ...current,
+                                    [plate.id]: [
+                                      ...customIngredients,
+                                      {
+                                        foodId: selectedCustomFood.id,
+                                        foodNameSnapshot: selectedCustomFood.name,
+                                        grams: nextGrams,
+                                        ...calculateMacroFromFood(selectedCustomFood, nextGrams),
+                                      },
+                                    ],
+                                  }));
+                                  setCustomFoodId("");
+                                  setCustomFoodGrams("");
+                                }}
+                              >
+                                Ekle
+                              </Button>
+                            </div>
+
+                            <div className="grid gap-2 text-xs text-ink/60 md:grid-cols-[1fr_auto] md:items-center">
+                              <span>
+                                Bugünlük toplam: {customPlate.totalGrams} g · {customPlate.calories} kcal · P {customPlate.protein} · Y {customPlate.fat} · K {customPlate.carbs}
+                              </span>
+                              <div className="flex flex-wrap gap-2 md:justify-end">
+                                <Button type="button" variant="ghost" className="px-3" onClick={() => setCustomPlateId(null)}>
+                                  Vazgeç
+                                </Button>
+                                <Button
+                                  type="button"
+                                  loading={addingPlateId === plate.id && isCustomizing}
+                                  className="px-3"
+                                  onClick={async () => {
+                                    if (portion <= 0 || !customIngredients.length) return;
+                                    setAddingPlateId(plate.id);
+                                    try {
+                                      await createPlateLog(user.uid, customPlate, portion);
+                                      setCustomPlateId(null);
+                                      setPlatePortions((current) => ({ ...current, [plate.id]: "1" }));
+                                    } finally {
+                                      setAddingPlateId(null);
+                                    }
+                                  }}
+                                >
+                                  Bu Haliyle Ekle
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState title="Henüz tabak eklenmemiş" description="Tabak sayfasından sık yediğin kombinasyonları kaydedince burada hızlıca ekleyebilirsin." />
+              )}
+            </div>
+          </Card>
+        </div>
         <Card>
           <h3 className="text-lg font-bold text-ink">Kilo</h3>
           <div className="mt-4 grid grid-cols-2 gap-3">
