@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../features/auth/AuthContext";
-import { subscribeWaterGlasses, subscribeWaterLogsByDate } from "../features/water/waterService";
+import { subscribeWaterGlasses, subscribeWaterLogsByDate, subscribeWaterLogsFromDate } from "../features/water/waterService";
 import type { WaterGlass, WaterLog } from "../types";
 
 export function useWaterGlasses() {
@@ -62,6 +62,38 @@ export function useWaterLogsByDate(dateKey: string) {
       },
     );
   }, [dateKey, user]);
+
+  return { logs, loading, error };
+}
+
+export function useWaterLogsFromDate(startDateKey: string) {
+  const { user } = useAuth();
+  const [logs, setLogs] = useState<WaterLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    return subscribeWaterLogsFromDate(
+      user.uid,
+      startDateKey,
+      (nextLogs) => {
+        setLogs(nextLogs);
+        setError(null);
+        setLoading(false);
+      },
+      () => {
+        setError("Özet su kayıtları alınamadı.");
+        setLoading(false);
+      },
+    );
+  }, [startDateKey, user]);
 
   return { logs, loading, error };
 }

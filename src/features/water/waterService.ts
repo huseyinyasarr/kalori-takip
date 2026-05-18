@@ -49,6 +49,25 @@ export function subscribeWaterLogsByDate(
   );
 }
 
+export function subscribeWaterLogsFromDate(
+  uid: string,
+  startDateKey: string,
+  onNext: (logs: WaterLog[]) => void,
+  onError: () => void,
+) {
+  return onSnapshot(
+    query(foodLogsCollection(uid), where("dateKey", ">=", startDateKey), orderBy("dateKey", "asc")),
+    (snapshot) => {
+      onNext(
+        snapshot.docs
+          .map((item) => ({ id: item.id, ...item.data() }) as WaterLog)
+          .filter((log) => log.entryType === "water"),
+      );
+    },
+    onError,
+  );
+}
+
 export async function createWaterGlass(uid: string, payload: WaterGlassInput) {
   await addDoc(foodsCollection(uid), {
     ...payload,

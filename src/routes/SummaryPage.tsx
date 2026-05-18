@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
-import { CaloriesChart, ProteinChart, WeightChart } from "../components/charts/TrackerCharts";
+import { CaloriesChart, ProteinChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
 import { subscribeWeightLogsFromDate } from "../features/history/weightService";
 import { useAuth } from "../features/auth/AuthContext";
 import { useProfile } from "../features/profile/ProfileContext";
 import { useFoodLogsFromDate } from "../hooks/useFoodLogs";
+import { useWaterLogsFromDate } from "../hooks/useWater";
 import type { WeightLog } from "../types";
 import { formatShortDate, getLastNDays, getMonthStartDateKey } from "../utils/date";
-import { sumDailyTotals } from "../utils/calculations";
+import { calculateDailyWaterTargetLiter, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 
 export function SummaryPage() {
   const { user } = useAuth();
@@ -16,7 +17,11 @@ export function SummaryPage() {
   const monthStart = getMonthStartDateKey();
   const sevenDays = getLastNDays(7);
   const { logs } = useFoodLogsFromDate(monthStart);
+  const { logs: waterLogs } = useWaterLogsFromDate(monthStart);
   const [weights, setWeights] = useState<WeightLog[]>([]);
+  const waterTargetLiter = calculateDailyWaterTargetLiter(profile?.currentWeight ?? 0);
+  const calorieTarget = profile?.dailyCalorieTarget;
+  const proteinTarget = profile?.proteinTargetGram;
 
   useEffect(() => {
     if (!user) return;
@@ -28,9 +33,10 @@ export function SummaryPage() {
     return keys.map((date) => {
       const totals = sumDailyTotals(logs.filter((log) => log.dateKey === date));
       const weight = weights.find((item) => item.dateKey === date && item.weight !== null)?.weight ?? null;
-      return { date, label: formatShortDate(date), ...totals, weight };
+      const waterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
+      return { date, label: formatShortDate(date), ...totals, calorieTarget, proteinTarget, weight, waterLiter, waterTargetLiter };
     });
-  }, [logs, monthStart, weights]);
+  }, [calorieTarget, logs, monthStart, proteinTarget, waterLogs, waterTargetLiter, weights]);
 
   const sevenDayLogs = logs.filter((log) => sevenDays.includes(log.dateKey));
   const sevenTotals = sumDailyTotals(sevenDayLogs);
@@ -55,7 +61,9 @@ export function SummaryPage() {
         <Metric label="Ay protein" value={`${monthAverageProtein} g`} />
         <Metric label="Hedef uyumu" value={`${compliance}%`} />
       </div>
-      {!logs.length && !weights.length ? <EmptyState title="Özet için veri yok" description="Yemek veya kilo kaydı eklendiğinde grafikler burada oluşur." /> : null}
+      {!logs.length && !waterLogs.length && !weights.length ? (
+        <EmptyState title="Özet için veri yok" description="Yemek, su veya kilo kaydı eklendiğinde grafikler burada oluşur." />
+      ) : null}
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
           <h3 className="mb-4 text-lg font-bold text-ink">Kalori tüketimi</h3>
@@ -64,6 +72,10 @@ export function SummaryPage() {
         <Card>
           <h3 className="mb-4 text-lg font-bold text-ink">Protein tüketimi</h3>
           <ProteinChart data={dailyData} />
+        </Card>
+        <Card className="xl:col-span-2">
+          <h3 className="mb-4 text-lg font-bold text-ink">Su tüketimi</h3>
+          <WaterChart data={dailyData} />
         </Card>
         <Card className="xl:col-span-2">
           <h3 className="mb-4 text-lg font-bold text-ink">Kilo değişimi</h3>
