@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Edit2, Plus, Salad, Trash2, Utensils, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddFoodLogForm } from "../components/forms/AddFoodLogForm";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -7,15 +7,16 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Input } from "../components/ui/Input";
 import { ProgressRing } from "../components/ui/ProgressRing";
 import { useAuth } from "../features/auth/AuthContext";
+import { subscribeWeightLogsUntilDate } from "../features/history/weightService";
 import { createFoodLog, createPlateLog, deleteFoodLog, updateFoodLogEntry } from "../features/logs/logService";
 import { useProfile } from "../features/profile/ProfileContext";
 import { useFoodLogsByDate } from "../hooks/useFoodLogs";
 import { useFoods } from "../hooks/useFoods";
 import { usePlates } from "../hooks/usePlates";
 import { useWaterLogsByDate } from "../hooks/useWater";
-import { calculateDailyWaterTargetLiter, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 import { addDays, formatDateKey, getTodayDateKey } from "../utils/date";
-import type { FoodLog } from "../types";
+import type { FoodLog, WeightLog } from "../types";
 
 export function HistoryPage() {
   const { user } = useAuth();
@@ -29,15 +30,36 @@ export function HistoryPage() {
   const [platePortion, setPlatePortion] = useState("1");
   const [addingPlateId, setAddingPlateId] = useState<string | null>(null);
   const [grams, setGrams] = useState("");
+  const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
+  const [weightError, setWeightError] = useState<string | null>(null);
   const { logs, loading, error } = useFoodLogsByDate(dateKey);
   const { logs: waterLogs, loading: waterLoading, error: waterError } = useWaterLogsByDate(dateKey);
   const totals = sumDailyTotals(logs);
+  const effectiveWeight = weightLogs.find((log) => log.weight !== null)?.weight ?? profile?.currentWeight ?? 0;
+  const historicalTargets = profile ? calculateTargets(effectiveWeight, profile.targetWeight) : null;
   const waterTotalMl = sumWaterMilliliters(waterLogs);
-  const waterTargetLiter = calculateDailyWaterTargetLiter(profile?.currentWeight ?? 0);
+  const waterTargetLiter = calculateDailyWaterTargetLiter(effectiveWeight);
   const waterTotalLiter = Math.round((waterTotalMl / 1000) * 10) / 10;
   const selectedPlate = plates.find((plate) => plate.id === selectedPlateId);
 
-  if (!user || !profile) return null;
+  useEffect(() => {
+    if (!user) {
+      setWeightLogs([]);
+      return;
+    }
+
+    return subscribeWeightLogsUntilDate(
+      user.uid,
+      dateKey,
+      (nextLogs) => {
+        setWeightLogs(nextLogs);
+        setWeightError(null);
+      },
+      () => setWeightError("Kilo kayıtları alınamadı."),
+    );
+  }, [dateKey, user]);
+
+  if (!user || !profile || !historicalTargets) return null;
 
   return (
     <div className="grid gap-5">
@@ -57,12 +79,14 @@ export function HistoryPage() {
         </div>
       </Card>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <ProgressRing label="Kalori" value={totals.calories} target={profile.dailyCalorieTarget} unit="kcal" tone="leaf" />
-        <ProgressRing label="Protein" value={totals.protein} target={profile.proteinTargetGram} unit="g" tone="coral" />
-        <ProgressRing label="Yağ" value={totals.fat} target={profile.minFatTargetGram} unit="g" tone="amber" minimum />
-        <ProgressRing label="Karbonhidrat" value={totals.carbs} target={profile.minCarbTargetGram} unit="g" tone="ink" minimum />
+        <ProgressRing label="Kalori" value={totals.calories} target={historicalTargets.dailyCalorieTarget} unit="kcal" tone="leaf" />
+        <ProgressRing label="Protein" value={totals.protein} target={historicalTargets.proteinTargetGram} unit="g" tone="coral" />
+        <ProgressRing label="Yağ" value={totals.fat} target={historicalTargets.minFatTargetGram} unit="g" tone="amber" minimum />
+        <ProgressRing label="Karbonhidrat" value={totals.carbs} target={historicalTargets.minCarbTargetGram} unit="g" tone="ink" minimum />
         <ProgressRing label="Su" value={waterTotalLiter} target={waterTargetLiter} unit="L" tone="leaf" />
       </div>
+      <p className="text-xs font-medium text-ink/50">Hedefler {effectiveWeight.toLocaleString("tr-TR")} kg kaydına göre hesaplandı.</p>
+      {weightError ? <p className="text-sm font-medium text-coral">{weightError}</p> : null}
       {waterError ? <p className="text-sm font-medium text-coral">{waterError}</p> : null}
       {waterLoading ? <p className="text-sm text-ink/60">Su kayıtları yükleniyor...</p> : null}
       <Card>

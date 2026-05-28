@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { CaloriesChart, ProteinChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
-import { subscribeWeightLogsFromDate } from "../features/history/weightService";
+import { subscribeWeightLogsUntilDate } from "../features/history/weightService";
 import { useAuth } from "../features/auth/AuthContext";
 import { useProfile } from "../features/profile/ProfileContext";
 import { useFoodLogsFromDate } from "../hooks/useFoodLogs";
 import { useWaterLogsFromDate } from "../hooks/useWater";
 import type { WeightLog } from "../types";
-import { formatShortDate, getLastNDays, getMonthStartDateKey } from "../utils/date";
-import { calculateDailyWaterTargetLiter, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import { formatShortDate, getLastNDays, getMonthStartDateKey, getTodayDateKey } from "../utils/date";
+import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 
 export function SummaryPage() {
   const { user } = useAuth();
@@ -19,24 +19,32 @@ export function SummaryPage() {
   const { logs } = useFoodLogsFromDate(monthStart);
   const { logs: waterLogs } = useWaterLogsFromDate(monthStart);
   const [weights, setWeights] = useState<WeightLog[]>([]);
-  const waterTargetLiter = calculateDailyWaterTargetLiter(profile?.currentWeight ?? 0);
-  const calorieTarget = profile?.dailyCalorieTarget;
-  const proteinTarget = profile?.proteinTargetGram;
 
   useEffect(() => {
     if (!user) return;
-    return subscribeWeightLogsFromDate(user.uid, monthStart, setWeights, () => undefined);
-  }, [monthStart, user]);
+    return subscribeWeightLogsUntilDate(user.uid, getTodayDateKey(), setWeights, () => undefined);
+  }, [user]);
 
   const dailyData = useMemo(() => {
     const keys = getLastNDays(30).filter((key) => key >= monthStart);
     return keys.map((date) => {
       const totals = sumDailyTotals(logs.filter((log) => log.dateKey === date));
       const weight = weights.find((item) => item.dateKey === date && item.weight !== null)?.weight ?? null;
+      const effectiveWeight = weights.find((item) => item.dateKey <= date && item.weight !== null)?.weight ?? profile?.currentWeight ?? 0;
+      const targets = profile ? calculateTargets(effectiveWeight, profile.targetWeight) : null;
       const waterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
-      return { date, label: formatShortDate(date), ...totals, calorieTarget, proteinTarget, weight, waterLiter, waterTargetLiter };
+      return {
+        date,
+        label: formatShortDate(date),
+        ...totals,
+        calorieTarget: targets?.dailyCalorieTarget,
+        proteinTarget: targets?.proteinTargetGram,
+        weight,
+        waterLiter,
+        waterTargetLiter: calculateDailyWaterTargetLiter(effectiveWeight),
+      };
     });
-  }, [calorieTarget, logs, monthStart, proteinTarget, waterLogs, waterTargetLiter, weights]);
+  }, [logs, monthStart, profile, waterLogs, weights]);
 
   const sevenDayLogs = logs.filter((log) => sevenDays.includes(log.dateKey));
   const sevenTotals = sumDailyTotals(sevenDayLogs);
