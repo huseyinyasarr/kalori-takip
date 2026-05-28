@@ -103,6 +103,34 @@ export async function updateFoodLogGrams(uid: string, log: FoodLog, sourceFood: 
   });
 }
 
+export async function updateFoodLogEntry(uid: string, log: FoodLog, sourceFood: Food | undefined, grams: number) {
+  const foodValues = sourceFood
+    ? sourceFood
+    : {
+        name: log.foodNameSnapshot,
+        caloriesPer100g: (log.calories / log.grams) * 100,
+        proteinPer100g: (log.protein / log.grams) * 100,
+        fatPer100g: (log.fat / log.grams) * 100,
+        carbPer100g: (log.carbs / log.grams) * 100,
+      };
+  const macros = calculateMacroFromFood(foodValues, grams);
+
+  await updateDoc(doc(db, "users", uid, "foodLogs", log.id), {
+    ...(sourceFood
+      ? {
+          foodId: sourceFood.id,
+          foodNameSnapshot: sourceFood.name,
+        }
+      : {}),
+    grams,
+    calories: macros.calories,
+    protein: macros.protein,
+    fat: macros.fat,
+    carbs: macros.carbs,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function deleteFoodLog(uid: string, logId: string) {
   await deleteDoc(doc(db, "users", uid, "foodLogs", logId));
 }

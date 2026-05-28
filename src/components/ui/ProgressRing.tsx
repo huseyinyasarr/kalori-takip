@@ -23,7 +23,7 @@ export function ProgressRing({ label, value, target, unit, tone = "leaf", minimu
   const background = `conic-gradient(${tones[tone]} ${clamped}%, #e8eee9 ${clamped}% 100%)`;
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-ink/10 bg-white p-4">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 overflow-hidden rounded-lg border border-ink/10 bg-white p-4">
       <div className="grid h-24 w-24 shrink-0 place-items-center rounded-full" style={{ background }}>
         <div className="grid h-16 w-16 place-items-center rounded-full bg-white text-center">
           {isMinimumApproved ? (
@@ -34,7 +34,7 @@ export function ProgressRing({ label, value, target, unit, tone = "leaf", minimu
         </div>
       </div>
       <div className="min-w-0">
-        <p className="font-semibold text-ink">{label}</p>
+        <p className="break-words font-semibold leading-tight text-ink">{label}</p>
         <p className="mt-1 text-sm text-ink/65">
           {value.toLocaleString("tr-TR")} / {target.toLocaleString("tr-TR")} {unit}
         </p>
