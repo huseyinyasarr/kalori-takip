@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { User } from "firebase/auth";
 import { Download, Info } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -10,7 +11,15 @@ import { useProfile } from "../features/profile/ProfileContext";
 import { useFoodLogsFromDate } from "../hooks/useFoodLogs";
 import { useWaterLogsFromDate } from "../hooks/useWater";
 import type { WeightLog } from "../types";
-import { addDays, formatShortDate, getDateRangeKeys, getLastNCompletedDays, getMonthDateRangeKeys, getTodayDateKey } from "../utils/date";
+import {
+  addDays,
+  formatDateKey,
+  formatShortDate,
+  getDateRangeKeys,
+  getLastNCompletedDays,
+  getMonthDateRangeKeys,
+  getTodayDateKey,
+} from "../utils/date";
 import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 
 type ChartFilterMode = "last7" | "last30" | "range" | "month";
@@ -50,6 +59,10 @@ export function SummaryPage() {
     return defaultChartDays;
   }, [chartFilterMode, defaultChartDays, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, todayDateKey, yesterdayDateKey]);
   const chartEndDateKey = chartDays[chartDays.length - 1] ?? yesterdayDateKey;
+  const chartFilterLabel = useMemo(
+    () => formatChartFilterLabel(chartFilterMode, chartDays, selectedMonthKey),
+    [chartDays, chartFilterMode, selectedMonthKey],
+  );
   const { logs } = useFoodLogsFromDate("0000-01-01");
   const { logs: waterLogs } = useWaterLogsFromDate("0000-01-01");
   const [weights, setWeights] = useState<WeightLog[]>([]);
@@ -118,11 +131,13 @@ export function SummaryPage() {
   async function exportSummaryPdf() {
     if (!exportRef.current || isExporting) return;
 
+    const exportedAt = new Date();
     setIsExporting(true);
     setExportError(null);
     try {
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
       await document.fonts.ready;
+      await wait(1500);
 
       const canvas = await html2canvas(exportRef.current, {
         backgroundColor: "#f6fbf7",
@@ -131,14 +146,27 @@ export function SummaryPage() {
         ignoreElements: (element) => element.classList.contains("pdf-ignore"),
       });
       const image = canvas.toDataURL("image/png", 1);
+      const pageMargin = Math.min(Math.max(Math.round(Math.min(canvas.width, canvas.height) * 0.04), 48), 96);
+      const exportMetadataImage = await createExportMetadataImage({ user, exportedAt });
+      const metadataHeight = 112;
+      const pageWidth = canvas.width + pageMargin * 2;
+      const pageHeight = canvas.height + pageMargin * 2 + metadataHeight;
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        orientation: pageWidth > pageHeight ? "landscape" : "portrait",
         unit: "px",
-        format: [canvas.width, canvas.height],
+        format: [pageWidth, pageHeight],
         compress: true,
       });
 
-      pdf.addImage(image, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.addImage(
+        exportMetadataImage.dataUrl,
+        "PNG",
+        pageWidth - pageMargin - exportMetadataImage.width,
+        pageMargin,
+        exportMetadataImage.width,
+        exportMetadataImage.height,
+      );
+      pdf.addImage(image, "PNG", pageMargin, pageMargin + metadataHeight, canvas.width, canvas.height);
       pdf.save(`kalori-ozet-${todayDateKey}.pdf`);
     } catch {
       setExportError("PDF oluşturulamadı. Sayfayı yenileyip tekrar deneyebilirsin.");
@@ -192,22 +220,29 @@ export function SummaryPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-ink">Grafik filtresi</p>
-            <div className="mt-2 inline-flex flex-wrap rounded-md border border-ink/10 bg-mint p-1">
-              <FilterButton active={chartFilterMode === "last7"} onClick={() => setChartFilterMode("last7")}>
-                Son hafta
-              </FilterButton>
-              <FilterButton active={chartFilterMode === "last30"} onClick={() => setChartFilterMode("last30")}>
-                Son 30 gün
-              </FilterButton>
-              <FilterButton active={chartFilterMode === "range"} onClick={() => setChartFilterMode("range")}>
-                Tarih aralığı
-              </FilterButton>
-              <FilterButton active={chartFilterMode === "month"} onClick={() => setChartFilterMode("month")}>
-                Ay seçimi
-              </FilterButton>
-            </div>
+            {isExporting ? (
+              <div className="mt-2 rounded-md border border-leaf/20 bg-mint px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/55">Seçili aralık</p>
+                <p className="mt-0.5 text-sm font-black text-ink">{chartFilterLabel}</p>
+              </div>
+            ) : (
+              <div className="mt-2 inline-flex flex-wrap rounded-md border border-ink/10 bg-mint p-1">
+                <FilterButton active={chartFilterMode === "last7"} onClick={() => setChartFilterMode("last7")}>
+                  Son hafta
+                </FilterButton>
+                <FilterButton active={chartFilterMode === "last30"} onClick={() => setChartFilterMode("last30")}>
+                  Son 30 gün
+                </FilterButton>
+                <FilterButton active={chartFilterMode === "range"} onClick={() => setChartFilterMode("range")}>
+                  Tarih aralığı
+                </FilterButton>
+                <FilterButton active={chartFilterMode === "month"} onClick={() => setChartFilterMode("month")}>
+                  Ay seçimi
+                </FilterButton>
+              </div>
+            )}
           </div>
-          {chartFilterMode === "range" ? (
+          {!isExporting && chartFilterMode === "range" ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[22rem]">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ink/80">Başlangıç</span>
@@ -231,7 +266,7 @@ export function SummaryPage() {
               </label>
             </div>
           ) : null}
-          {chartFilterMode === "month" ? (
+          {!isExporting && chartFilterMode === "month" ? (
             <label className="block lg:min-w-48">
               <span className="mb-1 block text-sm font-medium text-ink/80">Ay</span>
               <input
@@ -268,6 +303,215 @@ export function SummaryPage() {
       </div>
     </div>
   );
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+function formatChartFilterLabel(mode: ChartFilterMode, chartDays: string[], selectedMonthKey: string) {
+  const dateRangeLabel = formatDateRange(chartDays);
+
+  if (mode === "last7") {
+    return dateRangeLabel ? `Son hafta: ${dateRangeLabel}` : "Son hafta";
+  }
+
+  if (mode === "range") {
+    return dateRangeLabel ? `Tarih aralığı: ${dateRangeLabel}` : "Tarih aralığı";
+  }
+
+  if (mode === "month") {
+    const monthLabel = formatMonthKey(selectedMonthKey);
+    return dateRangeLabel ? `Ay seçimi: ${monthLabel} (${dateRangeLabel})` : `Ay seçimi: ${monthLabel}`;
+  }
+
+  return dateRangeLabel ? `Son 30 gün: ${dateRangeLabel}` : "Son 30 gün";
+}
+
+function formatDateRange(dateKeys: string[]) {
+  const startDateKey = dateKeys[0];
+  const endDateKey = dateKeys[dateKeys.length - 1];
+  if (!startDateKey || !endDateKey) return "";
+
+  if (startDateKey === endDateKey) {
+    return formatDateKey(startDateKey);
+  }
+
+  return `${formatDateKey(startDateKey)} - ${formatDateKey(endDateKey)}`;
+}
+
+function formatMonthKey(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  if (!year || !month) return monthKey;
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+}
+
+async function createExportMetadataImage({ user, exportedAt }: { user: User | null; exportedAt: Date }) {
+  const displayName = getUserDisplayName(user);
+  const email = user?.email ?? "-";
+  const initials = getUserInitials(displayName, email);
+  const width = 360;
+  const height = 88;
+  const scale = 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return { dataUrl: "", width, height };
+
+  ctx.scale(scale, scale);
+  ctx.clearRect(0, 0, width, height);
+  ctx.shadowColor = "rgba(23, 32, 28, 0.08)";
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 8;
+  drawRoundedRect(ctx, 0.5, 0.5, width - 1, height - 1, 8, "#ffffff", "rgba(23, 32, 28, 0.1)");
+  ctx.shadowColor = "transparent";
+
+  const avatarSize = 50;
+  const avatarX = width - 18 - avatarSize;
+  const avatarY = (height - avatarSize) / 2;
+  const textRight = avatarX - 16;
+  const textLeft = 18;
+  const textWidth = textRight - textLeft;
+
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "rgba(23, 32, 28, 0.52)";
+  ctx.font = "700 10px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.fillText("PDF OLUŞTURMA", textRight, 14);
+
+  ctx.fillStyle = "#17201c";
+  ctx.font = "800 13px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  drawFittedText(ctx, formatExportDateTime(exportedAt), textRight, 32, textWidth);
+
+  ctx.font = "800 14px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  drawFittedText(ctx, displayName, textRight, 51, textWidth);
+
+  ctx.fillStyle = "rgba(23, 32, 28, 0.58)";
+  ctx.font = "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  drawFittedText(ctx, email, textRight, 69, textWidth);
+
+  await drawAvatar(ctx, user?.photoURL, initials, avatarX, avatarY, avatarSize);
+
+  return { dataUrl: canvas.toDataURL("image/png"), width, height };
+}
+
+function getUserDisplayName(user: User | null) {
+  return user?.displayName || user?.email?.split("@")[0] || "Kullanıcı";
+}
+
+function getUserInitials(displayName: string, email: string) {
+  const source = displayName === "Kullanıcı" && email !== "-" ? email.split("@")[0] : displayName;
+  const initials = source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("tr-TR");
+
+  return initials || "K";
+}
+
+function formatExportDateTime(date: Date | null) {
+  if (!date) return "-";
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fillStyle: string,
+  strokeStyle?: string,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+
+  if (strokeStyle) {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawFittedText(ctx: CanvasRenderingContext2D, text: string, right: number, y: number, maxWidth: number) {
+  if (ctx.measureText(text).width <= maxWidth) {
+    ctx.fillText(text, right, y);
+    return;
+  }
+
+  let fittedText = text;
+  while (fittedText.length > 1 && ctx.measureText(`${fittedText}...`).width > maxWidth) {
+    fittedText = fittedText.slice(0, -1);
+  }
+  ctx.fillText(`${fittedText}...`, right, y);
+}
+
+async function drawAvatar(
+  ctx: CanvasRenderingContext2D,
+  photoURL: string | null | undefined,
+  initials: string,
+  x: number,
+  y: number,
+  size: number,
+) {
+  const image = photoURL ? await loadImage(photoURL).catch(() => null) : null;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  if (image) {
+    ctx.drawImage(image, x, y, size, size);
+  } else {
+    ctx.fillStyle = "#d8f4e2";
+    ctx.fillRect(x, y, size, size);
+    ctx.fillStyle = "#008765";
+    ctx.font = "800 18px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initials, x + size / 2, y + size / 2);
+  }
+
+  ctx.restore();
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.referrerPolicy = "no-referrer";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Image could not be loaded."));
+    image.src = src;
+  });
 }
 
 function Metric({ label, value }: { label: string; value: string }) {

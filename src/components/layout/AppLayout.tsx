@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, CalendarDays, Home, LogOut, Salad, Settings, Utensils, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { logout } from "../../lib/firebase";
+import { useAuth } from "../../features/auth/AuthContext";
 import { useProfile } from "../../features/profile/ProfileContext";
 import { shouldAskWeightToday } from "../../utils/calculations";
 import { WeightPromptModal } from "../forms/WeightPromptModal";
@@ -16,7 +18,25 @@ const navItems = [
 ];
 
 export function AppLayout() {
+  const { user } = useAuth();
   const { profile } = useProfile();
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const profilePhotoURLs = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [profile?.photoURL, user?.photoURL, ...(user?.providerData.map((provider) => provider.photoURL) ?? [])]
+            .filter((url): url is string => Boolean(url))
+            .flatMap(getPhotoURLVariants),
+        ),
+      ),
+    [profile?.photoURL, user?.photoURL, user?.providerData],
+  );
+  const profilePhotoURL = profilePhotoURLs[photoIndex];
+
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [profilePhotoURLs]);
 
   return (
     <div className="min-h-screen bg-cloud">
@@ -50,7 +70,18 @@ export function AppLayout() {
               <h1 className="truncate text-lg font-bold text-ink">{profile?.fullName || "Kalori Takip"}</h1>
             </div>
             <div className="flex items-center gap-2">
-              {profile?.photoURL ? <img src={profile.photoURL} alt="" className="h-9 w-9 rounded-full" /> : <UserRound className="h-8 w-8 text-ink/60" />}
+              {profilePhotoURL ? (
+                <img
+                  key={profilePhotoURL}
+                  src={profilePhotoURL}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-9 w-9 rounded-full object-cover"
+                  onError={() => setPhotoIndex((current) => current + 1)}
+                />
+              ) : (
+                <UserRound className="h-8 w-8 text-ink/60" />
+              )}
               <Button variant="ghost" icon={<LogOut className="h-4 w-4" />} onClick={() => logout()} className="px-3">
                 <span className="hidden sm:inline">Çıkış</span>
               </Button>
@@ -64,4 +95,13 @@ export function AppLayout() {
       {profile && profile.onboardingCompleted && shouldAskWeightToday(profile) ? <WeightPromptModal profile={profile} /> : null}
     </div>
   );
+}
+
+function getPhotoURLVariants(url: string) {
+  if (!url.includes("googleusercontent.com")) return [url];
+
+  const sizePattern = /=s\d+(?:-c)?$/;
+  if (!sizePattern.test(url)) return [url];
+
+  return [url, url.replace(sizePattern, "=s64-c"), url.replace(sizePattern, "=s128-c")];
 }
