@@ -12,7 +12,7 @@ import type { WeightLog } from "../types";
 import { addDays, formatShortDate, getDateRangeKeys, getLastNCompletedDays, getMonthDateRangeKeys, getTodayDateKey } from "../utils/date";
 import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 
-type ChartFilterMode = "last30" | "range" | "month";
+type ChartFilterMode = "last7" | "last30" | "range" | "month";
 
 export function SummaryPage() {
   const { user } = useAuth();
@@ -39,8 +39,12 @@ export function SummaryPage() {
       return getMonthDateRangeKeys(selectedMonthKey, yesterdayDateKey);
     }
 
+    if (chartFilterMode === "last7") {
+      return getLastNCompletedDays(7, todayDateKey);
+    }
+
     return defaultChartDays;
-  }, [chartFilterMode, defaultChartDays, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, yesterdayDateKey]);
+  }, [chartFilterMode, defaultChartDays, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, todayDateKey, yesterdayDateKey]);
   const chartEndDateKey = chartDays[chartDays.length - 1] ?? yesterdayDateKey;
   const { logs } = useFoodLogsFromDate("0000-01-01");
   const { logs: waterLogs } = useWaterLogsFromDate("0000-01-01");
@@ -137,7 +141,10 @@ export function SummaryPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-ink">Grafik filtresi</p>
-            <div className="mt-2 inline-flex rounded-md border border-ink/10 bg-mint p-1">
+            <div className="mt-2 inline-flex flex-wrap rounded-md border border-ink/10 bg-mint p-1">
+              <FilterButton active={chartFilterMode === "last7"} onClick={() => setChartFilterMode("last7")}>
+                Son hafta
+              </FilterButton>
               <FilterButton active={chartFilterMode === "last30"} onClick={() => setChartFilterMode("last30")}>
                 Son 30 gün
               </FilterButton>
