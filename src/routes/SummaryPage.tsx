@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { CaloriesChart, ProteinChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
@@ -16,6 +17,7 @@ export function SummaryPage() {
   const { profile } = useProfile();
   const todayDateKey = getTodayDateKey();
   const monthStart = getMonthStartDateKey();
+  const currentMonthLabel = new Intl.DateTimeFormat("tr-TR", { month: "long" }).format(new Date());
   const chartDays = useMemo(() => getLastNCompletedDays(30, todayDateKey), [todayDateKey]);
   const sevenDays = useMemo(() => chartDays.slice(-7), [chartDays]);
   const chartEndDateKey = chartDays[chartDays.length - 1] ?? todayDateKey;
@@ -29,7 +31,7 @@ export function SummaryPage() {
   }, [chartEndDateKey, user]);
 
   const dailyData = useMemo(() => {
-    return chartDays.map((date) => {
+    const baseData = chartDays.map((date) => {
       const totals = sumDailyTotals(logs.filter((log) => log.dateKey === date));
       const weight = weights.find((item) => item.dateKey === date && item.weight !== null)?.weight ?? null;
       const effectiveWeight = weights.find((item) => item.dateKey <= date && item.weight !== null)?.weight ?? profile?.currentWeight ?? 0;
@@ -46,6 +48,17 @@ export function SummaryPage() {
         waterTargetLiter: calculateDailyWaterTargetLiter(effectiveWeight),
       };
     });
+
+    const calorieAverage = averagePositiveValues(baseData.map((item) => item.calories));
+    const proteinAverage = averagePositiveValues(baseData.map((item) => item.protein), 1);
+    const waterAverageLiter = averagePositiveValues(baseData.map((item) => item.waterLiter), 1);
+
+    return baseData.map((item) => ({
+      ...item,
+      calorieAverage,
+      proteinAverage,
+      waterAverageLiter,
+    }));
   }, [chartDays, logs, profile, waterLogs, weights]);
 
   const sevenDayLogs = logs.filter((log) => sevenDays.includes(log.dateKey));
@@ -62,14 +75,28 @@ export function SummaryPage() {
   return (
     <div className="grid gap-5">
       <div>
-        <h2 className="text-2xl font-black text-ink">Özet</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-black text-ink">Özet</h2>
+          <div className="group relative inline-flex">
+            <button
+              type="button"
+              aria-label="Özet sayfası hakkında bilgi"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink/55 transition hover:bg-mint hover:text-ink focus:bg-mint focus:text-ink focus:outline-none focus:ring-2 focus:ring-leaf"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+            <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
+              Grafikler bugünü hariç tutar ve son 30 gün içindeki verileri gösterir. Grafiklerdeki kesik ortalama çizgileri, bu aralıkta 0 olmayan kalori, protein ve su değerlerinden hesaplanır. Son 7 gün kartları bugünü hariç son 7 günün ortalamasını; ay kartları ise mevcut ayda kayıt bulunan günlerin ortalamasını gösterir.
+            </div>
+          </div>
+        </div>
         <p className="text-sm text-ink/60">Son günler, bu ay ve kilo değişimi.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <Metric label="7 gün kalori" value={`${sevenAverageCalories} kcal`} />
-        <Metric label="7 gün protein" value={`${sevenAverageProtein} g`} />
-        <Metric label="Ay kalori" value={`${monthAverageCalories} kcal`} />
-        <Metric label="Ay protein" value={`${monthAverageProtein} g`} />
+        <Metric label="Son 7 gün kalori ort." value={`${sevenAverageCalories} kcal`} />
+        <Metric label="Son 7 gün protein ort." value={`${sevenAverageProtein} g`} />
+        <Metric label={`${currentMonthLabel} ayı kalori ort.`} value={`${monthAverageCalories} kcal`} />
+        <Metric label={`${currentMonthLabel} ayı protein ort.`} value={`${monthAverageProtein} g`} />
         <Metric label="Hedef uyumu" value={`${compliance}%`} />
       </div>
       {!logs.length && !waterLogs.length && !weights.length ? (
@@ -104,4 +131,13 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-xl font-black text-ink">{value}</p>
     </Card>
   );
+}
+
+function averagePositiveValues(values: Array<number | undefined>, precision = 0) {
+  const positiveValues = values.filter((value): value is number => typeof value === "number" && value > 0);
+  if (!positiveValues.length) return undefined;
+
+  const average = positiveValues.reduce((total, value) => total + value, 0) / positiveValues.length;
+  const multiplier = 10 ** precision;
+  return Math.round(average * multiplier) / multiplier;
 }

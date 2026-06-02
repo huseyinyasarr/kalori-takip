@@ -5,11 +5,14 @@ export interface ChartPoint {
   label: string;
   calories?: number;
   calorieTarget?: number;
+  calorieAverage?: number;
   protein?: number;
   proteinTarget?: number;
+  proteinAverage?: number;
   weight?: number | null;
   waterLiter?: number;
   waterTargetLiter?: number;
+  waterAverageLiter?: number;
 }
 
 export function CaloriesChart({ data }: { data: ChartPoint[] }) {
@@ -28,6 +31,15 @@ export function CaloriesChart({ data }: { data: ChartPoint[] }) {
           name="Kalori hedefi"
           stroke="#17201c"
           strokeDasharray="6 4"
+          strokeWidth={3}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="calorieAverage"
+          name="Ortalama kalori"
+          stroke="#ef7d63"
+          strokeDasharray="3 5"
           strokeWidth={3}
           dot={false}
         />
@@ -52,6 +64,15 @@ export function ProteinChart({ data }: { data: ChartPoint[] }) {
           name="Protein hedefi"
           stroke="#17201c"
           strokeDasharray="6 4"
+          strokeWidth={3}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="proteinAverage"
+          name="Ortalama protein"
+          stroke="#2f7d5b"
+          strokeDasharray="3 5"
           strokeWidth={3}
           dot={false}
         />
@@ -90,6 +111,15 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
           name="Su hedefi"
           stroke="#17201c"
           strokeDasharray="6 4"
+          strokeWidth={3}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="waterAverageLiter"
+          name="Ortalama su"
+          stroke="#ef7d63"
+          strokeDasharray="3 5"
           strokeWidth={3}
           dot={false}
         />
