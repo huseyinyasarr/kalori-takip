@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2, Utensils } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Utensils } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -17,11 +17,22 @@ export function PlatesPage() {
   const { plates, loading, error } = usePlates();
   const [plateName, setPlateName] = useState("");
   const [foodId, setFoodId] = useState("");
+  const [foodSearch, setFoodSearch] = useState("");
+  const [isFoodPickerOpen, setIsFoodPickerOpen] = useState(false);
   const [grams, setGrams] = useState("");
   const [ingredients, setIngredients] = useState<PlateIngredient[]>([]);
   const [editingPlate, setEditingPlate] = useState<Plate | null>(null);
   const totals = useMemo(() => sumDailyTotals(ingredients), [ingredients]);
   const totalGrams = useMemo(() => Math.round(ingredients.reduce((sum, item) => sum + item.grams, 0) * 10) / 10, [ingredients]);
+  const filteredFoods = useMemo(() => {
+    const normalizedSearch = foodSearch.trim().toLocaleLowerCase("tr-TR");
+
+    if (!normalizedSearch) {
+      return foods;
+    }
+
+    return foods.filter((food) => food.name.toLocaleLowerCase("tr-TR").includes(normalizedSearch));
+  }, [foods, foodSearch]);
 
   if (!user) return null;
 
@@ -66,6 +77,7 @@ export function PlatesPage() {
               setEditingPlate(null);
               setPlateName("");
               setFoodId("");
+              setFoodSearch("");
               setGrams("");
               setIngredients([]);
             }}
@@ -73,16 +85,48 @@ export function PlatesPage() {
             <Input label="Tabak adı" value={plateName} onChange={(event) => setPlateName(event.target.value)} placeholder="Pilav + tavuk" />
 
             <div className="grid gap-3 md:grid-cols-[1fr_120px_auto] md:items-end">
-              <label className="block">
+              <label className="relative block">
                 <span className="mb-1 block text-sm font-medium text-ink/80">Yemek</span>
-                <select className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-mint" value={foodId} onChange={(event) => setFoodId(event.target.value)}>
-                  <option value="">Seç</option>
-                  {foods.map((food) => (
-                    <option key={food.id} value={food.id}>
-                      {food.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                  <input
+                    className="w-full rounded-md border border-ink/15 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-leaf focus:ring-2 focus:ring-mint"
+                    placeholder="Yemek ara veya seç"
+                    value={foodSearch}
+                    onBlur={() => window.setTimeout(() => setIsFoodPickerOpen(false), 120)}
+                    onChange={(event) => {
+                      setFoodSearch(event.target.value);
+                      setIsFoodPickerOpen(true);
+                      if (foodId) {
+                        setFoodId("");
+                      }
+                    }}
+                    onFocus={() => setIsFoodPickerOpen(true)}
+                  />
+                </div>
+                {isFoodPickerOpen ? (
+                  <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-ink/10 bg-white py-1 text-sm shadow-lg">
+                    {filteredFoods.length ? (
+                      filteredFoods.map((food) => (
+                        <button
+                          key={food.id}
+                          type="button"
+                          className={`block w-full px-3 py-2 text-left transition hover:bg-mint/60 ${food.id === foodId ? "bg-mint/80 font-semibold text-ink" : "text-ink/80"}`}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            setFoodSearch(food.name);
+                            setFoodId(food.id);
+                            setIsFoodPickerOpen(false);
+                          }}
+                        >
+                          {food.name}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="block px-3 py-2 text-ink/50">Yemek bulunamadı</span>
+                    )}
+                  </div>
+                ) : null}
               </label>
               <Input
                 label="Gram"
@@ -114,6 +158,7 @@ export function PlatesPage() {
                     },
                   ]);
                   setFoodId("");
+                  setFoodSearch("");
                   setGrams("");
                 }}
               >
@@ -184,6 +229,7 @@ export function PlatesPage() {
                     setEditingPlate(null);
                     setPlateName("");
                     setFoodId("");
+                    setFoodSearch("");
                     setGrams("");
                     setIngredients([]);
                   }}
@@ -222,6 +268,7 @@ export function PlatesPage() {
                       setPlateName(plate.name);
                       setIngredients(plate.ingredients.map((item) => ({ ...item })));
                       setFoodId("");
+                      setFoodSearch("");
                       setGrams("");
                     }}
                   >
