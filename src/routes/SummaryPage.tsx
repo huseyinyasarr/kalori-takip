@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Info } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Download, Info } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
+import { Button } from "../components/ui/Button";
 import { CaloriesChart, ProteinChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
 import { subscribeWeightLogsUntilDate } from "../features/history/weightService";
 import { useAuth } from "../features/auth/AuthContext";
@@ -17,6 +18,9 @@ type ChartFilterMode = "last7" | "last30" | "range" | "month";
 export function SummaryPage() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const todayDateKey = getTodayDateKey();
   const yesterdayDateKey = addDays(todayDateKey, -1);
   const currentMonthKey = todayDateKey.slice(0, 7);
@@ -111,25 +115,72 @@ export function SummaryPage() {
   const proteinCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.protein, target: item.proteinTarget })));
   const waterCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.waterLiter, target: item.waterTargetLiter })));
 
+  async function exportSummaryPdf() {
+    if (!exportRef.current || isExporting) return;
+
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
+      await document.fonts.ready;
+
+      const canvas = await html2canvas(exportRef.current, {
+        backgroundColor: "#f6fbf7",
+        scale: 2,
+        useCORS: true,
+        ignoreElements: (element) => element.classList.contains("pdf-ignore"),
+      });
+      const image = canvas.toDataURL("image/png", 1);
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+        compress: true,
+      });
+
+      pdf.addImage(image, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.save(`kalori-ozet-${todayDateKey}.pdf`);
+    } catch {
+      setExportError("PDF oluşturulamadı. Sayfayı yenileyip tekrar deneyebilirsin.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
-    <div className="grid gap-5">
+    <div ref={exportRef} className="grid gap-5">
       <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-black text-ink">Özet</h2>
-          <div className="group relative inline-flex">
-            <button
-              type="button"
-              aria-label="Özet sayfası hakkında bilgi"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink/55 transition hover:bg-mint hover:text-ink focus:bg-mint focus:text-ink focus:outline-none focus:ring-2 focus:ring-leaf"
-            >
-              <Info className="h-4 w-4" />
-            </button>
-            <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
-              Üst kartlar bugünü hariç tüm kayıtlı geçmişin genel ortalamasını gösterir ve 0 olan değerleri ortalamaya katmaz. Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur.
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-ink">Özet</h2>
+              <div className="group relative inline-flex">
+                <button
+                  type="button"
+                  aria-label="Özet sayfası hakkında bilgi"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink/55 transition hover:bg-mint hover:text-ink focus:bg-mint focus:text-ink focus:outline-none focus:ring-2 focus:ring-leaf"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
+                  Üst kartlar bugünü hariç tüm kayıtlı geçmişin genel ortalamasını gösterir ve 0 olan değerleri ortalamaya katmaz. Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur.
+                </div>
+              </div>
             </div>
+            <p className="text-sm text-ink/60">Son günler, bu ay ve kilo değişimi.</p>
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            icon={<Download className="h-4 w-4" />}
+            loading={isExporting}
+            onClick={exportSummaryPdf}
+            className="pdf-ignore w-full sm:w-auto"
+          >
+            PDF
+          </Button>
         </div>
-        <p className="text-sm text-ink/60">Son günler, bu ay ve kilo değişimi.</p>
+        {exportError ? <p className="pdf-ignore mt-2 text-sm font-medium text-coral">{exportError}</p> : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="Genel kalori ort." value={formatMetricValue(overallAverageCalories, "kcal")} />
