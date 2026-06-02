@@ -9,7 +9,7 @@ import { useProfile } from "../features/profile/ProfileContext";
 import { useFoodLogsFromDate } from "../hooks/useFoodLogs";
 import { useWaterLogsFromDate } from "../hooks/useWater";
 import type { WeightLog } from "../types";
-import { addDays, formatShortDate, getDateRangeKeys, getLastNCompletedDays, getMonthDateRangeKeys, getMonthStartDateKey, getTodayDateKey } from "../utils/date";
+import { addDays, formatShortDate, getDateRangeKeys, getLastNCompletedDays, getMonthDateRangeKeys, getTodayDateKey } from "../utils/date";
 import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
 
 type ChartFilterMode = "last30" | "range" | "month";
@@ -19,8 +19,6 @@ export function SummaryPage() {
   const { profile } = useProfile();
   const todayDateKey = getTodayDateKey();
   const yesterdayDateKey = addDays(todayDateKey, -1);
-  const monthStart = getMonthStartDateKey();
-  const currentMonthLabel = new Intl.DateTimeFormat("tr-TR", { month: "long" }).format(new Date());
   const currentMonthKey = todayDateKey.slice(0, 7);
   const defaultChartDays = useMemo(() => getLastNCompletedDays(30, todayDateKey), [todayDateKey]);
   const [chartFilterMode, setChartFilterMode] = useState<ChartFilterMode>("last30");
@@ -43,11 +41,9 @@ export function SummaryPage() {
 
     return defaultChartDays;
   }, [chartFilterMode, defaultChartDays, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, yesterdayDateKey]);
-  const sevenDays = useMemo(() => defaultChartDays.slice(-7), [defaultChartDays]);
   const chartEndDateKey = chartDays[chartDays.length - 1] ?? yesterdayDateKey;
-  const subscriptionStartDateKey = [defaultChartDays[0], monthStart, chartDays[0]].filter(Boolean).sort()[0] ?? defaultChartDays[0];
-  const { logs } = useFoodLogsFromDate(subscriptionStartDateKey);
-  const { logs: waterLogs } = useWaterLogsFromDate(subscriptionStartDateKey);
+  const { logs } = useFoodLogsFromDate("0000-01-01");
+  const { logs: waterLogs } = useWaterLogsFromDate("0000-01-01");
   const [weights, setWeights] = useState<WeightLog[]>([]);
 
   useEffect(() => {
@@ -86,15 +82,24 @@ export function SummaryPage() {
     }));
   }, [chartDays, logs, profile, waterLogs, weights]);
 
-  const sevenDayLogs = logs.filter((log) => sevenDays.includes(log.dateKey));
-  const monthLogs = logs.filter((log) => log.dateKey >= monthStart);
-  const sevenTotals = sumDailyTotals(sevenDayLogs);
-  const monthTotals = sumDailyTotals(monthLogs);
-  const daysWithLogs = new Set(monthLogs.map((log) => log.dateKey)).size || 1;
-  const sevenAverageCalories = Math.round(sevenTotals.calories / 7);
-  const sevenAverageProtein = Math.round((sevenTotals.protein / 7) * 10) / 10;
-  const monthAverageCalories = Math.round(monthTotals.calories / daysWithLogs);
-  const monthAverageProtein = Math.round((monthTotals.protein / daysWithLogs) * 10) / 10;
+  const overallDailyData = useMemo(() => {
+    const dateKeys = Array.from(new Set([...logs.map((log) => log.dateKey), ...waterLogs.map((log) => log.dateKey)]))
+      .filter((dateKey) => dateKey < todayDateKey)
+      .sort();
+
+    return dateKeys.map((date) => {
+      const totals = sumDailyTotals(logs.filter((log) => log.dateKey === date));
+      const waterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
+      return {
+        ...totals,
+        waterLiter,
+      };
+    });
+  }, [logs, todayDateKey, waterLogs]);
+  const overallAverageCalories = averagePositiveValues(overallDailyData.map((item) => item.calories));
+  const overallAverageProtein = averagePositiveValues(overallDailyData.map((item) => item.protein), 1);
+  const overallAverageWaterLiter = averagePositiveValues(overallDailyData.map((item) => item.waterLiter), 1);
+  const overallTrackedDays = overallDailyData.length;
   const calorieCompliance = calculateGoalCompliance(
     dailyData.map((item) => ({ value: item.calories, target: item.calorieTarget })),
     (value, target) => value <= target,
@@ -116,17 +121,17 @@ export function SummaryPage() {
               <Info className="h-4 w-4" />
             </button>
             <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
-              Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur. Son 7 gün kartları bugünü hariç son 7 günün ortalamasını; ay kartları ise mevcut ayda kayıt bulunan günlerin ortalamasını gösterir.
+              Üst kartlar bugünü hariç tüm kayıtlı geçmişin genel ortalamasını gösterir ve 0 olan değerleri ortalamaya katmaz. Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur.
             </div>
           </div>
         </div>
         <p className="text-sm text-ink/60">Son günler, bu ay ve kilo değişimi.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Son 7 gün kalori ort." value={`${sevenAverageCalories} kcal`} />
-        <Metric label="Son 7 gün protein ort." value={`${sevenAverageProtein} g`} />
-        <Metric label={`${currentMonthLabel} ayı kalori ort.`} value={`${monthAverageCalories} kcal`} />
-        <Metric label={`${currentMonthLabel} ayı protein ort.`} value={`${monthAverageProtein} g`} />
+        <Metric label="Genel kalori ort." value={formatMetricValue(overallAverageCalories, "kcal")} />
+        <Metric label="Genel protein ort." value={formatMetricValue(overallAverageProtein, "g")} />
+        <Metric label="Genel su ort." value={formatMetricValue(overallAverageWaterLiter, "L")} />
+        <Metric label="Kayıtlı gün" value={`${overallTrackedDays}`} />
       </div>
       <Card className="p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -214,6 +219,10 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-xl font-black text-ink">{value}</p>
     </Card>
   );
+}
+
+function formatMetricValue(value: number | undefined, unit: string) {
+  return typeof value === "number" ? `${value} ${unit}` : "-";
 }
 
 function ChartTitle({ title, compliance }: { title: string; compliance?: number }) {
