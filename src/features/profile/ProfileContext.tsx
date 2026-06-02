@@ -27,20 +27,31 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
+    setError(null);
+    const timeoutId = window.setTimeout(() => {
+      setError("Profil bilgileri zamanında alınamadı. Sayfayı yenileyip tekrar deneyebilirsin.");
+      setLoading(false);
+    }, 15000);
+
     const unsubscribe = onSnapshot(
       doc(db, "users", user.uid),
       (snapshot) => {
+        window.clearTimeout(timeoutId);
         setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
         setError(null);
         setLoading(false);
       },
       () => {
+        window.clearTimeout(timeoutId);
         setError("Profil bilgileri alınamadı.");
         setLoading(false);
       },
     );
 
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, [authLoading, user]);
 
   const value = useMemo(() => ({ profile, loading: authLoading || loading, error }), [authLoading, error, loading, profile]);

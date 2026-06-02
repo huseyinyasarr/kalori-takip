@@ -17,14 +17,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
-      try {
-        if (nextUser) {
-          await ensureUserDocument(nextUser);
-        }
-        setUser(nextUser);
-      } finally {
-        setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser);
+      setLoading(false);
+
+      if (nextUser) {
+        void ensureUserDocument(nextUser).catch((error) => {
+          console.error("User document could not be initialized.", error);
+        });
       }
     });
 
@@ -37,7 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       signIn: async () => {
         const credential = await signInWithGoogle();
-        await ensureUserDocument(credential.user);
+        setUser(credential.user);
+        void ensureUserDocument(credential.user).catch((error) => {
+          console.error("User document could not be initialized.", error);
+        });
       },
       signOut: logout,
     }),

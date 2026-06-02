@@ -12,23 +12,37 @@ export function useFoods() {
   useEffect(() => {
     if (!user) {
       setFoods([]);
+      setError(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    return subscribeFoods(
+    setError(null);
+    const timeoutId = window.setTimeout(() => {
+      setError("Yemekler zamanında alınamadı. Sayfayı yenileyip tekrar deneyebilirsin.");
+      setLoading(false);
+    }, 15000);
+
+    const unsubscribe = subscribeFoods(
       user.uid,
       (nextFoods) => {
+        window.clearTimeout(timeoutId);
         setFoods(nextFoods);
         setError(null);
         setLoading(false);
       },
       () => {
+        window.clearTimeout(timeoutId);
         setError("Yemekler alınamadı.");
         setLoading(false);
       },
     );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, [user]);
 
   return { foods, loading, error };
