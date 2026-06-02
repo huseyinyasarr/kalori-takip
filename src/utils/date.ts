@@ -28,6 +28,10 @@ export function getLastNDays(count: number) {
   return Array.from({ length: count }, (_, index) => addDays(getTodayDateKey(), index - count + 1));
 }
 
+export function getLastNCompletedDays(count: number, dateKey = getTodayDateKey()) {
+  return Array.from({ length: count }, (_, index) => addDays(dateKey, index - count));
+}
+
 export function getMonthStartDateKey(date = new Date()) {
   return toDateKey(new Date(date.getFullYear(), date.getMonth(), 1));
 }
