@@ -88,7 +88,6 @@ export function SummaryPage() {
 
   const sevenDayLogs = logs.filter((log) => sevenDays.includes(log.dateKey));
   const monthLogs = logs.filter((log) => log.dateKey >= monthStart);
-  const defaultSummaryLogs = logs.filter((log) => log.dateKey >= defaultChartDays[0]);
   const sevenTotals = sumDailyTotals(sevenDayLogs);
   const monthTotals = sumDailyTotals(monthLogs);
   const daysWithLogs = new Set(monthLogs.map((log) => log.dateKey)).size || 1;
@@ -96,7 +95,12 @@ export function SummaryPage() {
   const sevenAverageProtein = Math.round((sevenTotals.protein / 7) * 10) / 10;
   const monthAverageCalories = Math.round(monthTotals.calories / daysWithLogs);
   const monthAverageProtein = Math.round((monthTotals.protein / daysWithLogs) * 10) / 10;
-  const compliance = profile?.dailyCalorieTarget ? Math.round((defaultSummaryLogs.filter((log) => log.calories <= profile.dailyCalorieTarget).length / Math.max(defaultSummaryLogs.length, 1)) * 100) : 0;
+  const calorieCompliance = calculateGoalCompliance(
+    dailyData.map((item) => ({ value: item.calories, target: item.calorieTarget })),
+    (value, target) => value <= target,
+  );
+  const proteinCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.protein, target: item.proteinTarget })));
+  const waterCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.waterLiter, target: item.waterTargetLiter })));
 
   return (
     <div className="grid gap-5">
@@ -112,18 +116,17 @@ export function SummaryPage() {
               <Info className="h-4 w-4" />
             </button>
             <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
-              Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Grafiklerdeki kesik ortalama çizgileri, bu aralıkta 0 olmayan kalori, protein ve su değerlerinden hesaplanır. Son 7 gün kartları bugünü hariç son 7 günün ortalamasını; ay kartları ise mevcut ayda kayıt bulunan günlerin ortalamasını gösterir.
+              Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur. Son 7 gün kartları bugünü hariç son 7 günün ortalamasını; ay kartları ise mevcut ayda kayıt bulunan günlerin ortalamasını gösterir.
             </div>
           </div>
         </div>
         <p className="text-sm text-ink/60">Son günler, bu ay ve kilo değişimi.</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="Son 7 gün kalori ort." value={`${sevenAverageCalories} kcal`} />
         <Metric label="Son 7 gün protein ort." value={`${sevenAverageProtein} g`} />
         <Metric label={`${currentMonthLabel} ayı kalori ort.`} value={`${monthAverageCalories} kcal`} />
         <Metric label={`${currentMonthLabel} ayı protein ort.`} value={`${monthAverageProtein} g`} />
-        <Metric label="Hedef uyumu" value={`${compliance}%`} />
       </div>
       <Card className="p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -184,15 +187,15 @@ export function SummaryPage() {
       ) : null}
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
-          <h3 className="mb-4 text-lg font-bold text-ink">Kalori tüketimi</h3>
+          <ChartTitle title="Kalori tüketimi" compliance={calorieCompliance} />
           <CaloriesChart data={dailyData} />
         </Card>
         <Card>
-          <h3 className="mb-4 text-lg font-bold text-ink">Protein tüketimi</h3>
+          <ChartTitle title="Protein tüketimi" compliance={proteinCompliance} />
           <ProteinChart data={dailyData} />
         </Card>
         <Card className="xl:col-span-2">
-          <h3 className="mb-4 text-lg font-bold text-ink">Su tüketimi</h3>
+          <ChartTitle title="Su tüketimi" compliance={waterCompliance} />
           <WaterChart data={dailyData} />
         </Card>
         <Card className="xl:col-span-2">
@@ -210,6 +213,18 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-semibold text-ink/55">{label}</p>
       <p className="mt-1 text-xl font-black text-ink">{value}</p>
     </Card>
+  );
+}
+
+function ChartTitle({ title, compliance }: { title: string; compliance?: number }) {
+  return (
+    <div className="mb-4 flex items-start justify-between gap-3">
+      <h3 className="text-lg font-bold text-ink">{title}</h3>
+      <div className="shrink-0 rounded-md bg-mint px-2.5 py-1 text-right">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-ink/55">Hedef uyumu</p>
+        <p className="text-sm font-black text-ink">{typeof compliance === "number" ? `${compliance}%` : "-"}</p>
+      </div>
+    </div>
   );
 }
 
@@ -234,4 +249,30 @@ function averagePositiveValues(values: Array<number | undefined>, precision = 0)
   const average = positiveValues.reduce((total, value) => total + value, 0) / positiveValues.length;
   const multiplier = 10 ** precision;
   return Math.round(average * multiplier) / multiplier;
+}
+
+function calculateGoalCompliance(
+  values: Array<{ value?: number; target?: number }>,
+  isCompliant: (value: number, target: number) => boolean,
+) {
+  const trackedValues = values.filter(
+    (item): item is { value: number; target: number } =>
+      typeof item.value === "number" && item.value > 0 && typeof item.target === "number" && item.target > 0,
+  );
+  if (!trackedValues.length) return undefined;
+
+  const compliantCount = trackedValues.filter((item) => isCompliant(item.value, item.target)).length;
+  return Math.round((compliantCount / trackedValues.length) * 100);
+}
+
+function calculateGoalCompletion(values: Array<{ value?: number; target?: number }>) {
+  const trackedValues = values.filter(
+    (item): item is { value: number; target: number } =>
+      typeof item.value === "number" && item.value > 0 && typeof item.target === "number" && item.target > 0,
+  );
+  if (!trackedValues.length) return undefined;
+
+  const totalValue = trackedValues.reduce((total, item) => total + item.value, 0);
+  const totalTarget = trackedValues.reduce((total, item) => total + item.target, 0);
+  return Math.min(Math.round((totalValue / totalTarget) * 100), 100);
 }
