@@ -1,3 +1,5 @@
+import type { Timestamp } from "firebase/firestore";
+
 export function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -32,6 +34,26 @@ export function getLastNCompletedDays(count: number, dateKey = getTodayDateKey()
   return Array.from({ length: count }, (_, index) => addDays(dateKey, index - count));
 }
 
+export function getDateRangeKeys(startDateKey: string, endDateKey: string) {
+  if (startDateKey > endDateKey) return [];
+
+  const keys: string[] = [];
+  let currentDateKey = startDateKey;
+  while (currentDateKey <= endDateKey) {
+    keys.push(currentDateKey);
+    currentDateKey = addDays(currentDateKey, 1);
+  }
+  return keys;
+}
+
+export function getMonthDateRangeKeys(monthKey: string, maxEndDateKey?: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const startDateKey = toDateKey(new Date(year, month - 1, 1));
+  const monthEndDateKey = toDateKey(new Date(year, month, 0));
+  const endDateKey = maxEndDateKey && maxEndDateKey < monthEndDateKey ? maxEndDateKey : monthEndDateKey;
+  return getDateRangeKeys(startDateKey, endDateKey);
+}
+
 export function getMonthStartDateKey(date = new Date()) {
   return toDateKey(new Date(date.getFullYear(), date.getMonth(), 1));
 }
@@ -49,4 +71,11 @@ export function formatShortDate(dateKey: string) {
     day: "2-digit",
     month: "2-digit",
   }).format(dateKeyToLocalDate(dateKey));
+}
+
+export function formatTime(timestamp: Timestamp) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(timestamp.toDate());
 }

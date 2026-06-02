@@ -1,4 +1,4 @@
-import { Droplets, Edit2, GlassWater, Plus, Salad, Trash2, Utensils } from "lucide-react";
+import { Clock, Droplets, Edit2, GlassWater, Plus, Salad, Trash2, Utensils } from "lucide-react";
 import { useState } from "react";
 import { AddFoodLogForm } from "../components/forms/AddFoodLogForm";
 import { Button } from "../components/ui/Button";
@@ -16,7 +16,7 @@ import { useFoods } from "../hooks/useFoods";
 import { usePlates } from "../hooks/usePlates";
 import { useWaterGlasses, useWaterLogsByDate } from "../hooks/useWater";
 import { calculateDailyWaterTargetLiter, calculateMacroFromFood, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
-import { getTodayDateKey } from "../utils/date";
+import { formatTime, getTodayDateKey } from "../utils/date";
 import type { Plate, PlateIngredient, FoodLog, WaterGlassSize } from "../types";
 
 const waterGlassIconSize: Record<WaterGlassSize, string> = {
@@ -417,7 +417,13 @@ export function DashboardPage() {
           {logs.map((log) => (
             <div key={log.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>
-                <p className="font-semibold text-ink">{log.foodNameSnapshot}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="font-semibold text-ink">{log.foodNameSnapshot}</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-ink/50">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatTime(log.consumedAt)}
+                  </span>
+                </div>
                 {editingLog?.id === log.id ? (
                   <div className="mt-2 flex max-w-xs gap-2">
                     <Input label="Gram" type="number" step="0.1" value={grams} onChange={(event) => setGrams(event.target.value)} />
@@ -459,7 +465,13 @@ export function DashboardPage() {
           {waterLogs.map((log) => (
             <div key={log.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>
-                <p className="font-semibold text-ink">{log.glassNameSnapshot}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="font-semibold text-ink">{log.glassNameSnapshot}</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-ink/50">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatTime(log.consumedAt)}
+                  </span>
+                </div>
                 <p className="text-sm text-ink/60">
                   {log.milliliters} ml · {Math.round((log.milliliters / 1000) * 10) / 10} L
                 </p>
