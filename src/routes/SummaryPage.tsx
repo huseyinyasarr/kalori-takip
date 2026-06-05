@@ -58,7 +58,27 @@ export function SummaryPage() {
 
     return defaultChartDays;
   }, [chartFilterMode, defaultChartDays, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, todayDateKey, yesterdayDateKey]);
-  const chartEndDateKey = chartDays[chartDays.length - 1] ?? yesterdayDateKey;
+  const weightChartDays = useMemo(() => {
+    if (chartFilterMode === "range") {
+      if (!rangeStartDateKey || !rangeEndDateKey) return [];
+
+      const endDateKey = rangeEndDateKey > todayDateKey ? todayDateKey : rangeEndDateKey;
+      return getDateRangeKeys(rangeStartDateKey, endDateKey);
+    }
+
+    if (chartFilterMode === "month") {
+      if (!selectedMonthKey) return [];
+
+      return getMonthDateRangeKeys(selectedMonthKey, todayDateKey);
+    }
+
+    if (chartFilterMode === "last7") {
+      return getDateRangeKeys(addDays(todayDateKey, -6), todayDateKey);
+    }
+
+    return getDateRangeKeys(addDays(todayDateKey, -29), todayDateKey);
+  }, [chartFilterMode, rangeEndDateKey, rangeStartDateKey, selectedMonthKey, todayDateKey]);
+  const weightChartEndDateKey = weightChartDays[weightChartDays.length - 1] ?? todayDateKey;
   const chartFilterLabel = useMemo(
     () => formatChartFilterLabel(chartFilterMode, chartDays, selectedMonthKey),
     [chartDays, chartFilterMode, selectedMonthKey],
@@ -69,8 +89,8 @@ export function SummaryPage() {
 
   useEffect(() => {
     if (!user) return;
-    return subscribeWeightLogsUntilDate(user.uid, chartEndDateKey, setWeights, () => undefined);
-  }, [chartEndDateKey, user]);
+    return subscribeWeightLogsUntilDate(user.uid, weightChartEndDateKey, setWeights, () => undefined);
+  }, [user, weightChartEndDateKey]);
 
   const dailyData = useMemo(() => {
     const baseData = chartDays.map((date) => {
@@ -102,6 +122,14 @@ export function SummaryPage() {
       waterAverageLiter,
     }));
   }, [chartDays, logs, profile, waterLogs, weights]);
+
+  const weightData = useMemo(() => {
+    return weightChartDays.map((date) => ({
+      date,
+      label: formatShortDate(date),
+      weight: weights.find((item) => item.dateKey === date && item.weight !== null)?.weight ?? null,
+    }));
+  }, [weightChartDays, weights]);
 
   const overallDailyData = useMemo(() => {
     const dateKeys = Array.from(new Set([...logs.map((log) => log.dateKey), ...waterLogs.map((log) => log.dateKey)]))
@@ -248,7 +276,7 @@ export function SummaryPage() {
                 <span className="mb-1 block text-sm font-medium text-ink/80">Başlangıç</span>
                 <input
                   type="date"
-                  max={yesterdayDateKey}
+                  max={todayDateKey}
                   value={rangeStartDateKey}
                   onChange={(event) => setRangeStartDateKey(event.target.value)}
                   className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none transition focus:border-leaf focus:ring-2 focus:ring-mint"
@@ -258,7 +286,7 @@ export function SummaryPage() {
                 <span className="mb-1 block text-sm font-medium text-ink/80">Bitiş</span>
                 <input
                   type="date"
-                  max={yesterdayDateKey}
+                  max={todayDateKey}
                   value={rangeEndDateKey}
                   onChange={(event) => setRangeEndDateKey(event.target.value)}
                   className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none transition focus:border-leaf focus:ring-2 focus:ring-mint"
@@ -298,7 +326,7 @@ export function SummaryPage() {
         </Card>
         <Card className="xl:col-span-2">
           <h3 className="mb-4 text-lg font-bold text-ink">Kilo değişimi</h3>
-          <WeightChart data={dailyData} />
+          <WeightChart data={weightData} />
         </Card>
       </div>
     </div>
