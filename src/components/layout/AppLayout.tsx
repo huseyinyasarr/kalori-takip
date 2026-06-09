@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarDays, Home, LogOut, Salad, Settings, Utensils, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Home, LogOut, Salad, Settings, ShieldCheck, Utensils, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { logout } from "../../lib/firebase";
 import { useAuth } from "../../features/auth/AuthContext";
@@ -10,17 +10,20 @@ import { Button } from "../ui/Button";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: Home },
-  { to: "/foods", label: "Yemekler", icon: Salad },
+  { to: "/foods", label: "Besinler", icon: Salad },
   { to: "/plates", label: "Tabak", icon: Utensils },
   { to: "/summary", label: "Özet", icon: BarChart3 },
   { to: "/history", label: "Geçmiş", icon: CalendarDays },
   { to: "/settings", label: "Ayarlar", icon: Settings },
 ];
 
+const adminNavItem = { to: "/admin", label: "Admin", icon: ShieldCheck };
+
 export function AppLayout() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { profile } = useProfile();
   const [photoIndex, setPhotoIndex] = useState(0);
+  const visibleNavItems = useMemo(() => (isAdmin ? [...navItems, adminNavItem] : navItems), [isAdmin]);
   const profilePhotoURLs = useMemo(
     () =>
       Array.from(
@@ -45,8 +48,8 @@ export function AppLayout() {
           <p className="text-xl font-black text-ink">Kalori Takip</p>
           <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
         </div>
-        <nav className="grid grid-cols-6 gap-1 p-2 md:grid-cols-1 md:px-3">
-          {navItems.map(({ to, label, icon: Icon }) => (
+        <nav className={`grid gap-1 p-2 md:grid-cols-1 md:px-3 ${isAdmin ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-6"}`}>
+          {visibleNavItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

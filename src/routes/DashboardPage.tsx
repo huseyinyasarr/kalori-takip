@@ -1,5 +1,5 @@
 import { Clock, Droplets, Edit2, GlassWater, Plus, Salad, Trash2, Utensils } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AddFoodLogForm } from "../components/forms/AddFoodLogForm";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -15,7 +15,17 @@ import { useFoodLogsByDate } from "../hooks/useFoodLogs";
 import { useFoods } from "../hooks/useFoods";
 import { usePlates } from "../hooks/usePlates";
 import { useWaterGlasses, useWaterLogsByDate } from "../hooks/useWater";
-import { calculateDailyWaterTargetLiter, calculateMacroFromFood, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import {
+  DEFAULT_PURE_WATER_TARGET_LITER,
+  calculateDailyWaterTargetLiter,
+  calculateFluidFromFood,
+  calculateMacroFromFood,
+  convertGlobalPlateToFood,
+  sumDailyTotals,
+  sumFoodFluidMilliliters,
+  sumWaterMilliliters,
+} from "../utils/calculations";
+import { getFoodCatalogKey, getWaterGlassCatalogKey, isSameFoodReference } from "../utils/catalog";
 import { formatTime, getTodayDateKey } from "../utils/date";
 import type { Plate, PlateIngredient, FoodLog, WaterGlassSize } from "../types";
 
@@ -25,15 +35,60 @@ const waterGlassIconSize: Record<WaterGlassSize, string> = {
   large: "h-11 w-11",
 };
 
+const weightStatusColors = {
+  far: { r: 239, g: 125, b: 99 },
+  middle: { r: 245, g: 189, b: 79 },
+  close: { r: 47, g: 125, b: 91 },
+};
+
+function mixWeightColor(from: (typeof weightStatusColors)["far"], to: (typeof weightStatusColors)["far"], amount: number) {
+  const ratio = Math.min(Math.max(amount, 0), 1);
+  const r = Math.round(from.r + (to.r - from.r) * ratio);
+  const g = Math.round(from.g + (to.g - from.g) * ratio);
+  const b = Math.round(from.b + (to.b - from.b) * ratio);
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function getCurrentWeightColor(currentWeight: number, targetWeight: number) {
+  if (!currentWeight || !targetWeight) return mixWeightColor(weightStatusColors.middle, weightStatusColors.close, 0);
+
+  const distance = Math.abs(currentWeight - targetWeight);
+  const farDistance = Math.max(targetWeight * 0.15, 5);
+  const closeness = 1 - Math.min(distance / farDistance, 1);
+
+  if (closeness < 0.5) {
+    return mixWeightColor(weightStatusColors.far, weightStatusColors.middle, closeness / 0.5);
+  }
+
+  return mixWeightColor(weightStatusColors.middle, weightStatusColors.close, (closeness - 0.5) / 0.5);
+}
+
+function formatQuickWeightInput(value: string) {
+  const normalized = value.replace(",", ".");
+  if (!/^\d*\.?\d{0,2}$/.test(normalized)) return null;
+
+  return value;
+}
+
+function parseQuickWeight(value: string) {
+  const normalized = value.replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+
+  return Number(normalized);
+}
+
 function buildPlateSnapshot(plate: Plate, ingredients: PlateIngredient[]): Plate {
   const totals = sumDailyTotals(ingredients);
   const totalGrams = Math.round(ingredients.reduce((sum, item) => sum + item.grams, 0) * 10) / 10;
+  const fluidMilliliters = ingredients.reduce((sum, item) => sum + (item.fluidMilliliters ?? 0), 0);
 
   return {
     ...plate,
     name: `${plate.name} (bugünlük)`,
     ingredients,
     totalGrams,
+    fluidMilliliters,
     ...totals,
   };
 }
@@ -43,6 +98,11 @@ export function DashboardPage() {
   const { profile } = useProfile();
   const { foods } = useFoods();
   const { plates } = usePlates();
+  const privatePlates = useMemo(() => plates.filter((plate) => plate.source !== "global"), [plates]);
+  const foodsWithGlobalPlates = useMemo(
+    () => [...foods, ...plates.filter((plate) => plate.source === "global").map(convertGlobalPlateToFood)].sort((a, b) => a.name.localeCompare(b.name, "tr")),
+    [foods, plates],
+  );
   const todayDateKey = getTodayDateKey();
   const { glasses } = useWaterGlasses();
   const { logs, loading, error } = useFoodLogsByDate(todayDateKey);
@@ -58,11 +118,16 @@ export function DashboardPage() {
   const [grams, setGrams] = useState("");
   const [quickWeight, setQuickWeight] = useState("");
   const totals = sumDailyTotals(logs);
-  const waterTotalMl = sumWaterMilliliters(waterLogs);
-  const waterTargetLiter = calculateDailyWaterTargetLiter(profile?.currentWeight ?? 0);
-  const waterTotalLiter = Math.round((waterTotalMl / 1000) * 10) / 10;
+  const pureWaterTotalMl = sumWaterMilliliters(waterLogs);
+  const foodFluidTotalMl = sumFoodFluidMilliliters(logs);
+  const totalFluidMl = pureWaterTotalMl + foodFluidTotalMl;
+  const fluidTargetLiter = calculateDailyWaterTargetLiter(profile?.currentWeight ?? 0);
+  const pureWaterTotalLiter = Math.round((pureWaterTotalMl / 1000) * 10) / 10;
+  const totalFluidLiter = Math.round((totalFluidMl / 1000) * 10) / 10;
+  const currentWeightColor = getCurrentWeightColor(profile?.currentWeight ?? 0, profile?.targetWeight ?? 0);
   const waterCountsByGlass = waterLogs.reduce<Record<string, number>>((acc, log) => {
-    acc[log.glassId] = (acc[log.glassId] ?? 0) + 1;
+    const glassKey = `${log.glassSource ?? "private"}:${log.glassId}`;
+    acc[glassKey] = (acc[glassKey] ?? 0) + 1;
     return acc;
   }, {});
 
@@ -76,13 +141,23 @@ export function DashboardPage() {
           <p className="text-sm text-ink/60">Günlük tüketim, hedef ve hızlı kilo düzenleme.</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
-          <Input label="Güncel kilo" type="number" step="0.1" value={quickWeight} placeholder={`${profile.currentWeight} kg`} onChange={(event) => setQuickWeight(event.target.value)} />
+          <Input
+            label="Güncel kilo"
+            type="text"
+            inputMode="decimal"
+            value={quickWeight}
+            placeholder={`${profile.currentWeight} kg`}
+            onChange={(event) => {
+              const value = formatQuickWeightInput(event.target.value);
+              if (value !== null) setQuickWeight(value);
+            }}
+          />
           <Button
             variant="secondary"
             icon={<Edit2 className="h-4 w-4" />}
             onClick={async () => {
-              const value = Number(quickWeight);
-              if (value > 0) {
+              const value = parseQuickWeight(quickWeight);
+              if (value && value > 0) {
                 await submitDailyWeight(user.uid, value, profile.targetWeight);
                 setQuickWeight("");
               }
@@ -100,8 +175,9 @@ export function DashboardPage() {
         <ProgressRing label="Karbonhidrat" value={totals.carbs} target={profile.minCarbTargetGram} unit="g" tone="ink" minimum />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ProgressRing label="Su" value={waterTotalLiter} target={waterTargetLiter} unit="L" tone="leaf" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <ProgressRing label="Saf su" value={pureWaterTotalLiter} target={DEFAULT_PURE_WATER_TARGET_LITER} unit="L" tone="leaf" />
+        <ProgressRing label="Toplam sıvı" value={totalFluidLiter} target={fluidTargetLiter} unit="L" tone="ink" />
         <Card className="sm:col-span-1 xl:col-span-3">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-mint text-leaf">
@@ -109,23 +185,27 @@ export function DashboardPage() {
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-bold text-ink">Su Ekle</h3>
-              <p className="mt-1 text-sm text-ink/60">Günlük ihtiyaç: kilo / 25 = {waterTargetLiter} L.</p>
+              <p className="mt-1 text-sm text-ink/60">
+                Saf su hedefi {DEFAULT_PURE_WATER_TARGET_LITER} L, toplam sıvı hedefi kilo / 22 = {fluidTargetLiter} L.
+              </p>
+              {foodFluidTotalMl ? <p className="mt-1 text-xs text-ink/50">Besinlerden gelen sıvı: {foodFluidTotalMl} ml.</p> : null}
               <div className="mt-4">
                 {glasses.length ? (
                   <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {glasses.map((glass) => {
                       const size = glass.size ?? "medium";
-                      const consumedCount = waterCountsByGlass[glass.id] ?? 0;
+                      const glassKey = getWaterGlassCatalogKey(glass);
+                      const consumedCount = waterCountsByGlass[glassKey] ?? 0;
                       return (
                         <Button
-                          key={glass.id}
+                          key={glassKey}
                           type="button"
                           variant="secondary"
-                          loading={addingWaterGlassId === glass.id}
+                          loading={addingWaterGlassId === glassKey}
                           className="relative min-h-24 flex-col px-3 py-3"
                           icon={<GlassWater className={`${waterGlassIconSize[size]} text-leaf`} />}
                           onClick={async () => {
-                            setAddingWaterGlassId(glass.id);
+                            setAddingWaterGlassId(glassKey);
                             try {
                               await createWaterLog(user.uid, glass);
                             } finally {
@@ -147,7 +227,7 @@ export function DashboardPage() {
                     })}
                   </div>
                 ) : (
-                  <EmptyState title="Henüz bardak eklenmemiş" description="Yemekler sayfasından bardak ölçüsü ekleyince buradan su kaydı oluşturabilirsin." />
+                  <EmptyState title="Henüz bardak eklenmemiş" description="Besinler sayfasından bardak ölçüsü ekleyince buradan su kaydı oluşturabilirsin." />
                 )}
               </div>
             </div>
@@ -160,13 +240,13 @@ export function DashboardPage() {
           <Card>
             <div className="flex items-center gap-2">
               <Salad className="h-5 w-5 text-leaf" />
-              <h3 className="text-lg font-bold text-ink">Yemek Ekle</h3>
+              <h3 className="text-lg font-bold text-ink">Besin Ekle</h3>
             </div>
             <div className="mt-4">
-              {foods.length ? (
-                <AddFoodLogForm foods={foods} onAdd={(food, amount) => createFoodLog(user.uid, food, amount)} />
+              {foodsWithGlobalPlates.length ? (
+                <AddFoodLogForm foods={foodsWithGlobalPlates} onAdd={(food, amount) => createFoodLog(user.uid, food, amount)} />
               ) : (
-                <EmptyState title="Henüz yemek eklenmemiş" description="Yemekler sayfasından besin ekleyince burada tüketim kaydı oluşturabilirsin." />
+                <EmptyState title="Henüz besin eklenmemiş" description="Besinler sayfasından kayıt ekleyince burada tüketim kaydı oluşturabilirsin." />
               )}
             </div>
           </Card>
@@ -177,15 +257,15 @@ export function DashboardPage() {
               <h3 className="text-lg font-bold text-ink">Tabak Ekle</h3>
             </div>
             <div className="mt-4">
-              {plates.length ? (
+              {privatePlates.length ? (
                 <div className="max-h-72 overflow-y-auto rounded-md border border-ink/10">
-                  {plates.map((plate) => {
+                  {privatePlates.map((plate) => {
                     const portionValue = platePortions[plate.id] ?? "1";
                     const portion = Number(portionValue || 1);
                     const isCustomizing = customPlateId === plate.id;
                     const customIngredients = customPlateIngredients[plate.id] ?? plate.ingredients;
                     const customPlate = buildPlateSnapshot(plate, customIngredients);
-                    const selectedCustomFood = foods.find((food) => food.id === customFoodId);
+                    const selectedCustomFood = foodsWithGlobalPlates.find((food) => getFoodCatalogKey(food) === customFoodId);
 
                     return (
                       <div key={plate.id} className="border-b border-ink/10 p-3 last:border-b-0">
@@ -274,7 +354,7 @@ export function DashboardPage() {
                                           ...current,
                                           [plate.id]: customIngredients.map((ingredient, ingredientIndex) => {
                                             if (ingredientIndex !== index) return ingredient;
-                                            const sourceFood = foods.find((food) => food.id === ingredient.foodId);
+                                            const sourceFood = foodsWithGlobalPlates.find((food) => isSameFoodReference(food, ingredient.foodId, ingredient.foodSource));
                                             const macros = sourceFood
                                               ? calculateMacroFromFood(sourceFood, nextGrams)
                                               : {
@@ -284,7 +364,12 @@ export function DashboardPage() {
                                                   carbs: Math.round((ingredient.carbs / ingredient.grams) * nextGrams * 10) / 10,
                                                 };
 
-                                            return { ...ingredient, grams: nextGrams, ...macros };
+                                            return {
+                                              ...ingredient,
+                                              grams: nextGrams,
+                                              fluidMilliliters: sourceFood ? calculateFluidFromFood(sourceFood, nextGrams) : Math.round(((ingredient.fluidMilliliters ?? 0) / ingredient.grams) * nextGrams),
+                                              ...macros,
+                                            };
                                           }),
                                         }));
                                       }}
@@ -317,8 +402,8 @@ export function DashboardPage() {
                                   onChange={(event) => setCustomFoodId(event.target.value)}
                                 >
                                   <option value="">Seç</option>
-                                  {foods.map((food) => (
-                                    <option key={food.id} value={food.id}>
+                                  {foodsWithGlobalPlates.map((food) => (
+                                    <option key={getFoodCatalogKey(food)} value={getFoodCatalogKey(food)}>
                                       {food.name}
                                     </option>
                                   ))}
@@ -337,12 +422,14 @@ export function DashboardPage() {
                                     ...current,
                                     [plate.id]: [
                                       ...customIngredients,
-                                      {
-                                        foodId: selectedCustomFood.id,
-                                        foodNameSnapshot: selectedCustomFood.name,
-                                        grams: nextGrams,
-                                        ...calculateMacroFromFood(selectedCustomFood, nextGrams),
-                                      },
+                                        {
+                                          foodId: selectedCustomFood.id,
+                                          foodSource: selectedCustomFood.source ?? "private",
+                                          foodNameSnapshot: selectedCustomFood.name,
+                                          grams: nextGrams,
+                                          fluidMilliliters: calculateFluidFromFood(selectedCustomFood, nextGrams),
+                                          ...calculateMacroFromFood(selectedCustomFood, nextGrams),
+                                        },
                                     ],
                                   }));
                                   setCustomFoodId("");
@@ -388,7 +475,7 @@ export function DashboardPage() {
                   })}
                 </div>
               ) : (
-                <EmptyState title="Henüz tabak eklenmemiş" description="Tabak sayfasından sık yediğin kombinasyonları kaydedince burada hızlıca ekleyebilirsin." />
+                <EmptyState title="Henüz kişisel tabak eklenmemiş" description="Tabak sayfasından kendi kombinasyonlarını kaydedince burada hızlıca ekleyebilirsin. Global tabaklar besin aramasından eklenir." />
               )}
             </div>
           </Card>
@@ -396,13 +483,17 @@ export function DashboardPage() {
         <Card>
           <h3 className="text-lg font-bold text-ink">Kilo</h3>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-md bg-mint p-3">
-              <p className="text-xs font-semibold text-leaf">Güncel</p>
-              <p className="mt-1 text-2xl font-black text-ink">{profile.currentWeight} kg</p>
+            <div className="rounded-md p-3" style={{ backgroundColor: `${currentWeightColor.replace("rgb", "rgba").replace(")", ", 0.14)")}` }}>
+              <p className="text-xs font-semibold" style={{ color: currentWeightColor }}>
+                Güncel
+              </p>
+              <p className="mt-1 text-2xl font-black" style={{ color: currentWeightColor }}>
+                {profile.currentWeight} kg
+              </p>
             </div>
-            <div className="rounded-md bg-amberSoft/25 p-3">
-              <p className="text-xs font-semibold text-ink/60">Hedef</p>
-              <p className="mt-1 text-2xl font-black text-ink">{profile.targetWeight} kg</p>
+            <div className="rounded-md bg-mint p-3">
+              <p className="text-xs font-semibold text-leaf">Hedef</p>
+              <p className="mt-1 text-2xl font-black text-leaf">{profile.targetWeight} kg</p>
             </div>
           </div>
         </Card>
@@ -430,7 +521,7 @@ export function DashboardPage() {
                     <Button
                       className="self-end"
                       onClick={async () => {
-                        await updateFoodLogGrams(user.uid, log, foods.find((food) => food.id === log.foodId), Number(grams));
+                        await updateFoodLogGrams(user.uid, log, foodsWithGlobalPlates.find((food) => isSameFoodReference(food, log.foodId, log.foodSource)), Number(grams));
                         setEditingLog(null);
                       }}
                     >
@@ -440,6 +531,7 @@ export function DashboardPage() {
                 ) : (
                   <p className="text-sm text-ink/60">
                     {log.grams} g · {log.calories} kcal · P {log.protein} g · Y {log.fat} g · K {log.carbs} g
+                    {log.fluidMilliliters ? ` · Sıvı ${log.fluidMilliliters} ml` : ""}
                   </p>
                 )}
               </div>

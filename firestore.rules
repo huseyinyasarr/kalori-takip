@@ -7,7 +7,67 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isAppUser() && request.auth.uid == userId;
+    }
+
+    function signedInEmail() {
+      return request.auth.token.email;
+    }
+
+    // Admin yetkisi verilecek Google hesaplari.
+    function adminEmails() {
+      return [
+        "admin-mailini-buraya-yaz@gmail.com"
+      ];
+    }
+
+    // Global katalog onerisi gonderebilecek editor hesaplari.
+    function editorEmails() {
+      return [
+        "editor-mailini-buraya-yaz@gmail.com"
+      ];
+    }
+
+    // Uygulamayi kullanmasina izin verilen normal kullanici hesaplari.
+    function appUserEmails() {
+      return [
+        "kullanici-mailini-buraya-yaz@gmail.com"
+      ];
+    }
+
+    function hasVerifiedEmail() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.role == "admin" ||
+        (hasVerifiedEmail() && signedInEmail() in adminEmails())
+      );
+    }
+
+    function isEditor() {
+      return isSignedIn() && (
+        isAdmin() ||
+        request.auth.token.role == "editor" ||
+        (hasVerifiedEmail() && signedInEmail() in editorEmails())
+      );
+    }
+
+    function isAppUser() {
+      return isSignedIn() && (
+        isAdmin() ||
+        isEditor() ||
+        (hasVerifiedEmail() && signedInEmail() in appUserEmails())
+      );
+    }
+
+    function isCatalogOwner() {
+      return isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    function isNewCatalogOwner() {
+      return isAppUser() && request.resource.data.ownerUid == request.auth.uid;
     }
 
     match /users/{userId} {
@@ -28,6 +88,87 @@ service cloud.firestore {
       match /weightLogs/{logId} {
         allow read, create, update, delete: if isOwner(userId);
       }
+
+      match /hiddenGlobalWaterGlasses/{glassId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+
+    match /roleProbes/{probeId} {
+      allow get: if (probeId == "admin" && isAdmin()) ||
+        (probeId == "editor" && isEditor()) ||
+        (probeId == "user" && isAppUser());
+      allow list, create, update, delete: if false;
+    }
+
+    match /globalFoods/{foodId} {
+      allow read: if isAppUser() && (
+        resource.data.status == "approved" ||
+        isAdmin() ||
+        (isEditor() && isCatalogOwner())
+      );
+
+      allow create: if isNewCatalogOwner() &&
+        request.resource.data.visibility == "public" &&
+        (
+          (isAdmin() && request.resource.data.status == "approved") ||
+          (!isAdmin() && isEditor() && request.resource.data.status == "pending")
+        );
+
+      allow update: if isAdmin() || (
+        isEditor() &&
+        isCatalogOwner() &&
+        resource.data.status in ["pending", "rejected"] &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.visibility == "public" &&
+        request.resource.data.status == "pending"
+      );
+
+      allow delete: if isAdmin() || (
+        isEditor() &&
+        isCatalogOwner() &&
+        resource.data.status in ["pending", "rejected"]
+      );
+    }
+
+    match /globalPlates/{plateId} {
+      allow read: if isAppUser() && (
+        resource.data.status == "approved" ||
+        isAdmin() ||
+        (isEditor() && isCatalogOwner())
+      );
+
+      allow create: if isNewCatalogOwner() &&
+        request.resource.data.visibility == "public" &&
+        (
+          (isAdmin() && request.resource.data.status == "approved") ||
+          (!isAdmin() && isEditor() && request.resource.data.status == "pending")
+        );
+
+      allow update: if isAdmin() || (
+        isEditor() &&
+        isCatalogOwner() &&
+        resource.data.status in ["pending", "rejected"] &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.visibility == "public" &&
+        request.resource.data.status == "pending"
+      );
+
+      allow delete: if isAdmin() || (
+        isEditor() &&
+        isCatalogOwner() &&
+        resource.data.status in ["pending", "rejected"]
+      );
+    }
+
+    match /globalWaterGlasses/{glassId} {
+      allow read: if isAppUser() && (
+        resource.data.status == "approved" ||
+        isAdmin() ||
+        (isEditor() && isCatalogOwner())
+      );
+
+      allow create, update, delete: if isAdmin();
     }
   }
 }

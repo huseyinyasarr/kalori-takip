@@ -13,6 +13,9 @@ export interface ChartPoint {
   waterLiter?: number;
   waterTargetLiter?: number;
   waterAverageLiter?: number;
+  pureWaterLiter?: number;
+  pureWaterTargetLiter?: number;
+  pureWaterAverageLiter?: number;
 }
 
 export function CaloriesChart({ data }: { data: ChartPoint[] }) {
@@ -104,11 +107,11 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
         <YAxis unit=" L" />
         <Tooltip />
         <Legend />
-        <Line type="monotone" dataKey="waterLiter" name="İçilen su" stroke="#2f7d5b" strokeWidth={3} dot={{ r: 3 }} />
+        <Line type="monotone" dataKey="waterLiter" name="Toplam sıvı" stroke="#2f7d5b" strokeWidth={3} dot={{ r: 3 }} />
         <Line
           type="monotone"
           dataKey="waterTargetLiter"
-          name="Su hedefi"
+          name="Sıvı hedefi"
           stroke="#17201c"
           strokeDasharray="6 4"
           strokeWidth={3}
@@ -117,6 +120,39 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
         <Line
           type="monotone"
           dataKey="waterAverageLiter"
+          name="Ortalama sıvı"
+          stroke="#ef7d63"
+          strokeDasharray="3 5"
+          strokeWidth={3}
+          dot={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function PureWaterChart({ data }: { data: ChartPoint[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
+        <XAxis dataKey="label" />
+        <YAxis unit=" L" />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey="pureWaterLiter" name="İçilen su" stroke="#1d8fb8" strokeWidth={3} dot={{ r: 3 }} />
+        <Line
+          type="monotone"
+          dataKey="pureWaterTargetLiter"
+          name="Su hedefi"
+          stroke="#17201c"
+          strokeDasharray="6 4"
+          strokeWidth={3}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="pureWaterAverageLiter"
           name="Ortalama su"
           stroke="#ef7d63"
           strokeDasharray="3 5"

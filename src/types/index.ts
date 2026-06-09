@@ -1,6 +1,18 @@
 import type { Timestamp } from "firebase/firestore";
 
 export type WeightLogSource = "measured" | "manual" | "skipped";
+export type UserRole = "admin" | "editor" | "user";
+export type CatalogSource = "private" | "global";
+export type CatalogVisibility = "private" | "public";
+export type ApprovalStatus = "approved" | "pending" | "rejected";
+export type FoodKind = "solid" | "liquid";
+export type FoodNutritionUnit = "g" | "ml";
+
+export interface FoodPortion {
+  id?: string;
+  name: string;
+  grams: number;
+}
 
 export interface UserProfile {
   uid: string;
@@ -25,20 +37,48 @@ export interface Food {
   id: string;
   entryType?: "food" | "waterGlass" | "plate";
   name: string;
+  description?: string;
+  kind?: FoodKind;
+  nutritionUnit?: FoodNutritionUnit;
   caloriesPer100g: number;
   proteinPer100g: number;
   fatPer100g: number;
   carbPer100g: number;
+  fluidRatio?: number;
+  portions?: FoodPortion[];
+  plateIngredients?: PlateIngredient[];
+  plateTotalGrams?: number;
+  plateFluidMilliliters?: number;
+  source?: CatalogSource;
+  visibility?: CatalogVisibility;
+  status?: ApprovalStatus;
+  ownerUid?: string | null;
+  createdByRole?: UserRole;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
 
-export type FoodInput = Omit<Food, "id" | "createdAt" | "updatedAt">;
+export type FoodInput = Pick<
+  Food,
+  | "name"
+  | "description"
+  | "kind"
+  | "nutritionUnit"
+  | "caloriesPer100g"
+  | "proteinPer100g"
+  | "fatPer100g"
+  | "carbPer100g"
+  | "fluidRatio"
+  | "portions"
+  | "visibility"
+>;
 
 export interface PlateIngredient extends DailyTotals {
   foodId: string;
+  foodSource?: CatalogSource;
   foodNameSnapshot: string;
   grams: number;
+  fluidMilliliters?: number;
 }
 
 export interface Plate extends DailyTotals {
@@ -47,11 +87,20 @@ export interface Plate extends DailyTotals {
   name: string;
   ingredients: PlateIngredient[];
   totalGrams: number;
+  fluidMilliliters?: number;
+  source?: CatalogSource;
+  visibility?: CatalogVisibility;
+  status?: ApprovalStatus;
+  ownerUid?: string | null;
+  createdByRole?: UserRole;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
 
-export type PlateInput = Omit<Plate, "id" | "createdAt" | "updatedAt">;
+export type PlateInput = Pick<
+  Plate,
+  "name" | "ingredients" | "totalGrams" | "calories" | "protein" | "fat" | "carbs" | "fluidMilliliters" | "visibility"
+>;
 
 export interface FoodLog {
   id: string;
@@ -59,12 +108,14 @@ export interface FoodLog {
   dateKey: string;
   consumedAt: Timestamp;
   foodId: string;
+  foodSource?: CatalogSource;
   foodNameSnapshot: string;
   grams: number;
   calories: number;
   protein: number;
   fat: number;
   carbs: number;
+  fluidMilliliters?: number;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -75,6 +126,12 @@ export interface WaterGlass {
   name: string;
   milliliters: number;
   size?: WaterGlassSize;
+  source?: CatalogSource;
+  visibility?: CatalogVisibility;
+  status?: ApprovalStatus;
+  ownerUid?: string | null;
+  createdByRole?: UserRole;
+  originalGlobalGlassId?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -89,6 +146,7 @@ export interface WaterLog {
   dateKey: string;
   consumedAt: Timestamp;
   glassId: string;
+  glassSource?: CatalogSource;
   glassNameSnapshot: string;
   milliliters: number;
   createdAt?: Timestamp;

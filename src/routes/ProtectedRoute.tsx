@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import type { ReactNode } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { useProfile } from "../features/profile/ProfileContext";
 import { LoadingScreen } from "../components/ui/LoadingScreen";
@@ -56,4 +57,13 @@ export function PublicOnlyRoute() {
   if (user && !profile?.onboardingCompleted) return <Navigate to="/onboarding" replace />;
 
   return <Outlet />;
+}
+
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const { isAdmin, loading: authLoading } = useAuth();
+
+  if (authLoading) return <LoadingScreen />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+
+  return children;
 }

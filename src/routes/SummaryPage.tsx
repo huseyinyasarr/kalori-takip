@@ -4,7 +4,7 @@ import { Download, Info } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Button } from "../components/ui/Button";
-import { CaloriesChart, ProteinChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
+import { CaloriesChart, ProteinChart, PureWaterChart, WaterChart, WeightChart } from "../components/charts/TrackerCharts";
 import { subscribeWeightLogsUntilDate } from "../features/history/weightService";
 import { useAuth } from "../features/auth/AuthContext";
 import { useProfile } from "../features/profile/ProfileContext";
@@ -20,9 +20,19 @@ import {
   getMonthDateRangeKeys,
   getTodayDateKey,
 } from "../utils/date";
-import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import {
+  DEFAULT_PURE_WATER_TARGET_LITER,
+  calculateDailyWaterTargetLiter,
+  calculateTargets,
+  sumDailyTotals,
+  sumFoodFluidMilliliters,
+  sumWaterMilliliters,
+} from "../utils/calculations";
 
 type ChartFilterMode = "last7" | "last30" | "range" | "month";
+
+const PDF_EXPORT_CONTENT_WIDTH = 1152;
+const PDF_EXPORT_VIEWPORT_WIDTH = 1440;
 
 export function SummaryPage() {
   const { user } = useAuth();
@@ -98,7 +108,10 @@ export function SummaryPage() {
       const weight = weights.find((item) => item.dateKey === date && item.weight !== null)?.weight ?? null;
       const effectiveWeight = weights.find((item) => item.dateKey <= date && item.weight !== null)?.weight ?? profile?.currentWeight ?? 0;
       const targets = profile ? calculateTargets(effectiveWeight, profile.targetWeight) : null;
-      const waterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
+      const dayLogs = logs.filter((log) => log.dateKey === date);
+      const dayWaterLogs = waterLogs.filter((log) => log.dateKey === date);
+      const pureWaterLiter = Math.round((sumWaterMilliliters(dayWaterLogs) / 1000) * 10) / 10;
+      const waterLiter = Math.round((pureWaterLiter + sumFoodFluidMilliliters(dayLogs) / 1000) * 10) / 10;
       return {
         date,
         label: formatShortDate(date),
@@ -107,6 +120,8 @@ export function SummaryPage() {
         proteinTarget: targets?.proteinTargetGram,
         weight,
         waterLiter,
+        pureWaterLiter,
+        pureWaterTargetLiter: DEFAULT_PURE_WATER_TARGET_LITER,
         waterTargetLiter: calculateDailyWaterTargetLiter(effectiveWeight),
       };
     });
@@ -114,12 +129,14 @@ export function SummaryPage() {
     const calorieAverage = averagePositiveValues(baseData.map((item) => item.calories));
     const proteinAverage = averagePositiveValues(baseData.map((item) => item.protein), 1);
     const waterAverageLiter = averagePositiveValues(baseData.map((item) => item.waterLiter), 1);
+    const pureWaterAverageLiter = averagePositiveValues(baseData.map((item) => item.pureWaterLiter), 1);
 
     return baseData.map((item) => ({
       ...item,
       calorieAverage,
       proteinAverage,
       waterAverageLiter,
+      pureWaterAverageLiter,
     }));
   }, [chartDays, logs, profile, waterLogs, weights]);
 
@@ -137,17 +154,21 @@ export function SummaryPage() {
       .sort();
 
     return dateKeys.map((date) => {
-      const totals = sumDailyTotals(logs.filter((log) => log.dateKey === date));
-      const waterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
+      const dayLogs = logs.filter((log) => log.dateKey === date);
+      const totals = sumDailyTotals(dayLogs);
+      const pureWaterLiter = Math.round((sumWaterMilliliters(waterLogs.filter((log) => log.dateKey === date)) / 1000) * 10) / 10;
+      const waterLiter = Math.round((pureWaterLiter + sumFoodFluidMilliliters(dayLogs) / 1000) * 10) / 10;
       return {
         ...totals,
         waterLiter,
+        pureWaterLiter,
       };
     });
   }, [logs, todayDateKey, waterLogs]);
   const overallAverageCalories = averagePositiveValues(overallDailyData.map((item) => item.calories));
   const overallAverageProtein = averagePositiveValues(overallDailyData.map((item) => item.protein), 1);
   const overallAverageWaterLiter = averagePositiveValues(overallDailyData.map((item) => item.waterLiter), 1);
+  const overallAveragePureWaterLiter = averagePositiveValues(overallDailyData.map((item) => item.pureWaterLiter), 1);
   const overallTrackedDays = overallDailyData.length;
   const calorieCompliance = calculateGoalCompliance(
     dailyData.map((item) => ({ value: item.calories, target: item.calorieTarget })),
@@ -155,6 +176,7 @@ export function SummaryPage() {
   );
   const proteinCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.protein, target: item.proteinTarget })));
   const waterCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.waterLiter, target: item.waterTargetLiter })));
+  const pureWaterCompliance = calculateGoalCompletion(dailyData.map((item) => ({ value: item.pureWaterLiter, target: item.pureWaterTargetLiter })));
 
   async function exportSummaryPdf() {
     if (!exportRef.current || isExporting) return;
@@ -170,8 +192,16 @@ export function SummaryPage() {
       const canvas = await html2canvas(exportRef.current, {
         backgroundColor: "#f6fbf7",
         scale: 2,
+        windowWidth: PDF_EXPORT_VIEWPORT_WIDTH,
         useCORS: true,
         ignoreElements: (element) => element.classList.contains("pdf-ignore"),
+        onclone: (documentClone) => {
+          const exportRoot = documentClone.querySelector<HTMLElement>("[data-pdf-export-root]");
+          if (!exportRoot) return;
+
+          exportRoot.style.width = `${PDF_EXPORT_CONTENT_WIDTH}px`;
+          exportRoot.style.maxWidth = "none";
+        },
       });
       const image = canvas.toDataURL("image/png", 1);
       const pageMargin = Math.min(Math.max(Math.round(Math.min(canvas.width, canvas.height) * 0.04), 48), 96);
@@ -204,7 +234,11 @@ export function SummaryPage() {
   }
 
   return (
-    <div ref={exportRef} className="grid gap-5">
+    <div
+      ref={exportRef}
+      data-pdf-export-root
+      className="grid gap-5"
+    >
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -219,7 +253,7 @@ export function SummaryPage() {
                   <Info className="h-4 w-4" />
                 </button>
                 <div className="pointer-events-none absolute left-0 top-10 z-10 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 text-justify text-xs font-medium leading-5 text-ink/70 opacity-0 shadow-soft transition group-hover:opacity-100 group-focus-within:opacity-100">
-                  Üst kartlar bugünü hariç tüm kayıtlı geçmişin genel ortalamasını gösterir ve 0 olan değerleri ortalamaya katmaz. Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein ve su hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur.
+                  Üst kartlar bugünü hariç tüm kayıtlı geçmişin genel ortalamasını gösterir ve 0 olan değerleri ortalamaya katmaz. Grafikler seçilen filtre aralığındaki verileri gösterir ve bugünü hariç tutar. Kesik ortalama çizgileri 0 olmayan değerlerden hesaplanır. Kalori hedef uyumu, 0 olmayan günlerde hedefi aşmayan günlerin oranıdır. Protein, su ve toplam sıvı hedef uyumu, 0 olmayan günlerde toplam tüketimin toplam hedefe oranıdır; örneğin iki günde 100 g hedefe karşı 80 g ve 70 g protein alınırsa uyum %75 olur.
                 </div>
               </div>
             </div>
@@ -233,15 +267,16 @@ export function SummaryPage() {
             onClick={exportSummaryPdf}
             className="pdf-ignore w-full sm:w-auto"
           >
-            PDF
+            {isExporting ? "PDF hazırlanıyor" : "PDF"}
           </Button>
         </div>
         {exportError ? <p className="pdf-ignore mt-2 text-sm font-medium text-coral">{exportError}</p> : null}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <Metric label="Genel kalori ort." value={formatMetricValue(overallAverageCalories, "kcal")} />
         <Metric label="Genel protein ort." value={formatMetricValue(overallAverageProtein, "g")} />
-        <Metric label="Genel su ort." value={formatMetricValue(overallAverageWaterLiter, "L")} />
+        <Metric label="Genel su ort." value={formatMetricValue(overallAveragePureWaterLiter, "L")} />
+        <Metric label="Genel sıvı ort." value={formatMetricValue(overallAverageWaterLiter, "L")} />
         <Metric label="Kayıtlı gün" value={`${overallTrackedDays}`} />
       </div>
       <Card className="p-3">
@@ -309,7 +344,7 @@ export function SummaryPage() {
         </div>
       </Card>
       {!logs.length && !waterLogs.length && !weights.length ? (
-        <EmptyState title="Özet için veri yok" description="Yemek, su veya kilo kaydı eklendiğinde grafikler burada oluşur." />
+        <EmptyState title="Özet için veri yok" description="Besin, su veya kilo kaydı eklendiğinde grafikler burada oluşur." />
       ) : null}
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
@@ -321,8 +356,12 @@ export function SummaryPage() {
           <ProteinChart data={dailyData} />
         </Card>
         <Card className="xl:col-span-2">
-          <ChartTitle title="Su tüketimi" compliance={waterCompliance} />
+          <ChartTitle title="Toplam sıvı tüketimi" compliance={waterCompliance} />
           <WaterChart data={dailyData} />
+        </Card>
+        <Card className="xl:col-span-2">
+          <ChartTitle title="Su tüketimi" compliance={pureWaterCompliance} />
+          <PureWaterChart data={dailyData} />
         </Card>
         <Card className="xl:col-span-2">
           <h3 className="mb-4 text-lg font-bold text-ink">Kilo değişimi</h3>

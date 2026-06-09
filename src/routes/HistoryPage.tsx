@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Edit2, Plus, Salad, Trash2, Utensils, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AddFoodLogForm } from "../components/forms/AddFoodLogForm";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -14,7 +14,16 @@ import { useFoodLogsByDate } from "../hooks/useFoodLogs";
 import { useFoods } from "../hooks/useFoods";
 import { usePlates } from "../hooks/usePlates";
 import { useWaterLogsByDate } from "../hooks/useWater";
-import { calculateDailyWaterTargetLiter, calculateTargets, sumDailyTotals, sumWaterMilliliters } from "../utils/calculations";
+import {
+  DEFAULT_PURE_WATER_TARGET_LITER,
+  calculateDailyWaterTargetLiter,
+  calculateTargets,
+  convertGlobalPlateToFood,
+  sumDailyTotals,
+  sumFoodFluidMilliliters,
+  sumWaterMilliliters,
+} from "../utils/calculations";
+import { getFoodCatalogKey, getPlateCatalogKey } from "../utils/catalog";
 import { addDays, formatDateKey, getTodayDateKey } from "../utils/date";
 import type { FoodLog, WeightLog } from "../types";
 
@@ -23,6 +32,11 @@ export function HistoryPage() {
   const { profile } = useProfile();
   const { foods } = useFoods();
   const { plates } = usePlates();
+  const privatePlates = useMemo(() => plates.filter((plate) => plate.source !== "global"), [plates]);
+  const foodsWithGlobalPlates = useMemo(
+    () => [...foods, ...plates.filter((plate) => plate.source === "global").map(convertGlobalPlateToFood)].sort((a, b) => a.name.localeCompare(b.name, "tr")),
+    [foods, plates],
+  );
   const [dateKey, setDateKey] = useState(getTodayDateKey());
   const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
   const [editingFoodId, setEditingFoodId] = useState("");
@@ -37,10 +51,13 @@ export function HistoryPage() {
   const totals = sumDailyTotals(logs);
   const effectiveWeight = weightLogs.find((log) => log.weight !== null)?.weight ?? profile?.currentWeight ?? 0;
   const historicalTargets = profile ? calculateTargets(effectiveWeight, profile.targetWeight) : null;
-  const waterTotalMl = sumWaterMilliliters(waterLogs);
-  const waterTargetLiter = calculateDailyWaterTargetLiter(effectiveWeight);
-  const waterTotalLiter = Math.round((waterTotalMl / 1000) * 10) / 10;
-  const selectedPlate = plates.find((plate) => plate.id === selectedPlateId);
+  const pureWaterTotalMl = sumWaterMilliliters(waterLogs);
+  const foodFluidTotalMl = sumFoodFluidMilliliters(logs);
+  const totalFluidMl = pureWaterTotalMl + foodFluidTotalMl;
+  const fluidTargetLiter = calculateDailyWaterTargetLiter(effectiveWeight);
+  const pureWaterTotalLiter = Math.round((pureWaterTotalMl / 1000) * 10) / 10;
+  const totalFluidLiter = Math.round((totalFluidMl / 1000) * 10) / 10;
+  const selectedPlate = privatePlates.find((plate) => getPlateCatalogKey(plate) === selectedPlateId);
 
   useEffect(() => {
     if (!user) {
@@ -78,12 +95,13 @@ export function HistoryPage() {
           </Button>
         </div>
       </Card>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <ProgressRing label="Kalori" value={totals.calories} target={historicalTargets.dailyCalorieTarget} unit="kcal" tone="leaf" />
         <ProgressRing label="Protein" value={totals.protein} target={historicalTargets.proteinTargetGram} unit="g" tone="coral" />
         <ProgressRing label="Yağ" value={totals.fat} target={historicalTargets.minFatTargetGram} unit="g" tone="amber" minimum />
         <ProgressRing label="Karbonhidrat" value={totals.carbs} target={historicalTargets.minCarbTargetGram} unit="g" tone="ink" minimum />
-        <ProgressRing label="Su" value={waterTotalLiter} target={waterTargetLiter} unit="L" tone="leaf" />
+        <ProgressRing label="Saf su" value={pureWaterTotalLiter} target={DEFAULT_PURE_WATER_TARGET_LITER} unit="L" tone="leaf" />
+        <ProgressRing label="Toplam sıvı" value={totalFluidLiter} target={fluidTargetLiter} unit="L" tone="ink" />
       </div>
       <p className="text-xs font-medium text-ink/50">Hedefler {effectiveWeight.toLocaleString("tr-TR")} kg kaydına göre hesaplandı.</p>
       {weightError ? <p className="text-sm font-medium text-coral">{weightError}</p> : null}
@@ -92,13 +110,13 @@ export function HistoryPage() {
       <Card>
         <div className="flex items-center gap-2">
           <Salad className="h-5 w-5 text-leaf" />
-          <h3 className="text-lg font-bold text-ink">{formatDateKey(dateKey)} için yemek ekle</h3>
+          <h3 className="text-lg font-bold text-ink">{formatDateKey(dateKey)} için besin ekle</h3>
         </div>
         <div className="mt-4">
-          {foods.length ? (
-            <AddFoodLogForm foods={foods} onAdd={(food, amount) => createFoodLog(user.uid, food, amount, dateKey)} />
+          {foodsWithGlobalPlates.length ? (
+            <AddFoodLogForm foods={foodsWithGlobalPlates} onAdd={(food, amount) => createFoodLog(user.uid, food, amount, dateKey)} />
           ) : (
-            <EmptyState title="Henüz yemek eklenmemiş" description="Yemekler sayfasından besin ekleyince geçmiş tarihlere de kayıt oluşturabilirsin." />
+            <EmptyState title="Henüz besin eklenmemiş" description="Besinler sayfasından kayıt ekleyince geçmiş tarihlere de tüketim oluşturabilirsin." />
           )}
         </div>
       </Card>
@@ -108,7 +126,7 @@ export function HistoryPage() {
           <h3 className="text-lg font-bold text-ink">{formatDateKey(dateKey)} için tabak ekle</h3>
         </div>
         <div className="mt-4">
-          {plates.length ? (
+          {privatePlates.length ? (
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto] md:items-end">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ink/80">Tabak</span>
@@ -118,8 +136,8 @@ export function HistoryPage() {
                   onChange={(event) => setSelectedPlateId(event.target.value)}
                 >
                   <option value="">Tabak seç</option>
-                  {plates.map((plate) => (
-                    <option key={plate.id} value={plate.id}>
+                  {privatePlates.map((plate) => (
+                    <option key={getPlateCatalogKey(plate)} value={getPlateCatalogKey(plate)}>
                       {plate.name} · {plate.calories} kcal
                     </option>
                   ))}
@@ -151,7 +169,7 @@ export function HistoryPage() {
                   const portion = Number(platePortion);
                   if (!selectedPlate || portion <= 0) return;
 
-                  setAddingPlateId(selectedPlate.id);
+                  setAddingPlateId(getPlateCatalogKey(selectedPlate));
                   try {
                     await createPlateLog(user.uid, selectedPlate, portion, dateKey);
                     setSelectedPlateId("");
@@ -165,7 +183,7 @@ export function HistoryPage() {
               </Button>
             </div>
           ) : (
-            <EmptyState title="Henüz tabak eklenmemiş" description="Tabak sayfasından kombinasyon kaydedince geçmiş tarihlere de tabak ekleyebilirsin." />
+            <EmptyState title="Henüz kişisel tabak eklenmemiş" description="Kendi tabaklarını Tabak sayfasından kaydedince burada seçebilirsin. Global tabaklar besin aramasından eklenir." />
           )}
         </div>
       </Card>
@@ -182,15 +200,15 @@ export function HistoryPage() {
                 {editingLog?.id === log.id ? (
                   <div className="mt-2 grid max-w-2xl gap-2 sm:grid-cols-[minmax(0,1fr)_120px_auto_auto] sm:items-end">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-ink/80">Yemek</span>
+                      <span className="mb-1 block text-sm font-medium text-ink/80">Besin</span>
                       <select
                         className="w-full rounded-md border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-mint"
                         value={editingFoodId}
                         onChange={(event) => setEditingFoodId(event.target.value)}
                       >
-                        {foods.some((food) => food.id === editingFoodId) ? null : <option value={editingFoodId}>{log.foodNameSnapshot}</option>}
-                        {foods.map((food) => (
-                          <option key={food.id} value={food.id}>
+                        {foodsWithGlobalPlates.some((food) => getFoodCatalogKey(food) === editingFoodId) ? null : <option value={editingFoodId}>{log.foodNameSnapshot}</option>}
+                        {foodsWithGlobalPlates.map((food) => (
+                          <option key={getFoodCatalogKey(food)} value={getFoodCatalogKey(food)}>
                             {food.name}
                           </option>
                         ))}
@@ -202,7 +220,7 @@ export function HistoryPage() {
                         const nextGrams = Number(grams);
                         if (nextGrams <= 0) return;
 
-                        await updateFoodLogEntry(user.uid, log, foods.find((food) => food.id === editingFoodId), nextGrams);
+                        await updateFoodLogEntry(user.uid, log, foodsWithGlobalPlates.find((food) => getFoodCatalogKey(food) === editingFoodId), nextGrams);
                         setEditingLog(null);
                         setEditingFoodId("");
                         setGrams("");
@@ -226,6 +244,7 @@ export function HistoryPage() {
                 ) : (
                   <p className="text-sm text-ink/60">
                     {log.grams} g · {log.calories} kcal · P {log.protein} g · Y {log.fat} g · K {log.carbs} g
+                    {log.fluidMilliliters ? ` · Sıvı ${log.fluidMilliliters} ml` : ""}
                   </p>
                 )}
               </div>
@@ -235,7 +254,7 @@ export function HistoryPage() {
                   icon={<Edit2 className="h-4 w-4" />}
                   onClick={() => {
                     setEditingLog(log);
-                    setEditingFoodId(log.foodId);
+                    setEditingFoodId(`${log.foodSource ?? "private"}:${log.foodId}`);
                     setGrams(String(log.grams));
                   }}
                 >
