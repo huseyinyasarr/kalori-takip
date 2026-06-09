@@ -130,7 +130,7 @@ textarea {
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.42), transparent 38%);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.34), transparent 34%);
   }
 
   .liquid-glass-button > * {
@@ -140,9 +140,21 @@ textarea {
 
   .liquid-glass-button[data-variant="primary"] {
     background:
-      radial-gradient(ellipse at 22% 0%, rgba(255, 255, 255, 0.28), transparent 28%),
-      linear-gradient(135deg, rgba(61, 139, 101, 0.96), rgba(35, 105, 73, 0.96)) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%),
+      linear-gradient(135deg, #3b8f67, #25694b) !important;
+    border-color: rgba(47, 125, 91, 0.28);
     color: white;
+    box-shadow:
+      0 10px 22px rgba(47, 125, 91, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.34) inset,
+      0 -1px 0 rgba(23, 32, 28, 0.14) inset;
+  }
+
+  .liquid-glass-button[data-variant="primary"]::before,
+  .liquid-glass-button[data-variant="danger"]::before {
+    inset: 1px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
+    opacity: 0.75;
   }
 
   .liquid-glass-button[data-variant="secondary"] {
@@ -160,9 +172,14 @@ textarea {
 
   .liquid-glass-button[data-variant="danger"] {
     background:
-      radial-gradient(ellipse at 22% 0%, rgba(255, 255, 255, 0.28), transparent 28%),
-      linear-gradient(135deg, rgba(239, 125, 99, 0.95), rgba(213, 91, 67, 0.94)) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%),
+      linear-gradient(135deg, #ef7d63, #dc6b51) !important;
+    border-color: rgba(239, 125, 99, 0.28);
     color: white;
+    box-shadow:
+      0 10px 22px rgba(239, 125, 99, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.34) inset,
+      0 -1px 0 rgba(23, 32, 28, 0.14) inset;
   }
 
   .liquid-glass-nav {

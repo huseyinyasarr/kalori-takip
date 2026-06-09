@@ -1,4 +1,4 @@
-import { Activity, Chrome } from "lucide-react";
+import { Chrome } from "lucide-react";
 import { useState } from "react";
 import { FirebaseError } from "firebase/app";
 import { Button } from "../components/ui/Button";
@@ -39,9 +39,7 @@ export function LoginPage() {
     <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
       <div className="mobile-screen w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-lg bg-leaf text-white">
-            <Activity className="h-6 w-6" />
-          </div>
+          <img src="/logo.svg" alt="" className="h-14 w-14 shrink-0 rounded-2xl shadow-soft" />
           <div>
             <h1 className="text-2xl font-black text-ink">Kalori Takip</h1>
             <p className="text-sm text-ink/60">Kalori, makro ve kilo takibi.</p>

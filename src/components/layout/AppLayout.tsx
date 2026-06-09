@@ -104,8 +104,13 @@ export function AppLayout() {
         }`}
       >
         <div className="hidden p-5 md:block">
-          <p className="text-xl font-black text-ink">Kalori Takip</p>
-          <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.svg" alt="" className="h-11 w-11 shrink-0 rounded-xl shadow-soft" />
+            <div className="min-w-0">
+              <p className="text-xl font-black leading-tight text-ink">Kalori Takip</p>
+              <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
+            </div>
+          </div>
         </div>
         <div
           className={`mobile-menu-sheet liquid-glass-menu absolute inset-x-0 bottom-[calc(100%+0.75rem)] rounded-[1.5rem] border border-white/65 bg-white/70 p-2 shadow-xl shadow-ink/15 transition-all duration-300 ease-out md:hidden ${
@@ -182,9 +187,12 @@ export function AppLayout() {
       <div className="pb-24 md:ml-64 md:pb-0">
         <header className="liquid-glass-topbar mobile-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-leaf">Calorie Tracker</p>
-              <h1 className="truncate text-lg font-bold text-ink">{profile?.fullName || "Kalori Takip"}</h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <img src="/logo.svg" alt="" className="h-10 w-10 shrink-0 rounded-xl shadow-soft" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-leaf">Calorie Tracker</p>
+                <h1 className="truncate text-lg font-bold text-ink">{profile?.fullName || "Kalori Takip"}</h1>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {profilePhotoURL ? (
