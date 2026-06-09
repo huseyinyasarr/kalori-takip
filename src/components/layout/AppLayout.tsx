@@ -108,7 +108,7 @@ export function AppLayout() {
           <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
         </div>
         <div
-          className={`mobile-menu-sheet liquid-glass-menu absolute inset-x-0 bottom-[calc(100%+0.75rem)] rounded-[1.5rem] border border-white/55 bg-white/55 p-2 shadow-xl shadow-ink/15 transition-all duration-300 ease-out md:hidden ${
+          className={`mobile-menu-sheet liquid-glass-menu absolute inset-x-0 bottom-[calc(100%+0.75rem)] rounded-[1.5rem] border border-white/65 bg-white/70 p-2 shadow-xl shadow-ink/15 transition-all duration-300 ease-out md:hidden ${
             isMoreMenuOpen
               ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
               : "pointer-events-none translate-y-3 scale-95 opacity-0"
@@ -123,7 +123,7 @@ export function AppLayout() {
                 className={({ isActive }) =>
                   `mobile-nav-item liquid-glass-menu-item flex min-h-11 items-center gap-3 rounded-[1.15rem] px-3 text-sm font-semibold transition-all duration-200 ${
                     isMoreMenuOpen ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-                  } ${isActive ? "liquid-glass-active text-leaf" : "text-ink/70 hover:bg-white/35 hover:text-ink"}`
+                  } ${isActive ? "liquid-glass-active text-leaf" : "text-ink/70 hover:bg-white/45 hover:text-ink"}`
                 }
               >
                 <Icon className="h-5 w-5" />
@@ -138,7 +138,7 @@ export function AppLayout() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `mobile-nav-item mobile-main-nav-item flex min-h-[2.85rem] flex-col items-center justify-center gap-px rounded-[1.05rem] px-1 text-[10.5px] font-semibold transition ${
+                `mobile-nav-item mobile-main-nav-item flex min-h-[2.65rem] flex-col items-center justify-center gap-px rounded-[0.95rem] px-1 text-[10px] font-semibold transition ${
                   isActive ? "liquid-glass-active text-leaf" : "text-ink/65 hover:bg-white/35 hover:text-ink"
                 }`
               }
@@ -152,7 +152,7 @@ export function AppLayout() {
             aria-expanded={isMoreMenuOpen}
             aria-label="Diğer sayfaları aç"
             onClick={() => setIsMoreMenuOpen((isOpen) => !isOpen)}
-            className={`mobile-nav-item mobile-main-nav-item flex min-h-[2.85rem] flex-col items-center justify-center gap-px rounded-[1.05rem] px-1 text-[10.5px] font-semibold transition ${
+            className={`mobile-nav-item mobile-main-nav-item flex min-h-[2.65rem] flex-col items-center justify-center gap-px rounded-[0.95rem] px-1 text-[10px] font-semibold transition ${
               isMoreMenuOpen || isMoreRouteActive ? "liquid-glass-active text-leaf" : "text-ink/65 hover:bg-white/35 hover:text-ink"
             }`}
           >

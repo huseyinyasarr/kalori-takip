@@ -74,6 +74,14 @@ textarea {
     opacity: 0.72;
   }
 
+  .liquid-glass-menu::before {
+    background:
+      radial-gradient(ellipse at 18% -10%, rgba(255, 255, 255, 0.82), transparent 24%),
+      radial-gradient(ellipse at 92% 12%, rgba(255, 255, 255, 0.48), transparent 26%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(223, 244, 231, 0.34));
+    opacity: 0.95;
+  }
+
   .liquid-glass-nav::after,
   .liquid-glass-menu::after {
     content: "";
@@ -86,18 +94,24 @@ textarea {
       0 -1px 0 rgba(23, 32, 28, 0.08) inset;
   }
 
-  .liquid-glass-nav > *,
+  .liquid-glass-nav > :not(.mobile-menu-sheet),
   .liquid-glass-menu > * {
     position: relative;
     z-index: 1;
   }
 
+  .liquid-glass-nav > .mobile-menu-sheet {
+    position: absolute;
+    z-index: 2;
+  }
+
   .liquid-glass-menu {
     box-shadow:
-      0 22px 52px rgba(23, 32, 28, 0.18),
-      0 1px 0 rgba(255, 255, 255, 0.86) inset;
-    -webkit-backdrop-filter: blur(30px) saturate(1.7);
-    backdrop-filter: blur(30px) saturate(1.7);
+      0 22px 52px rgba(23, 32, 28, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.92) inset,
+      0 -1px 0 rgba(23, 32, 28, 0.06) inset;
+    -webkit-backdrop-filter: blur(38px) saturate(1.85);
+    backdrop-filter: blur(38px) saturate(1.85);
   }
 
   .liquid-glass-active {
