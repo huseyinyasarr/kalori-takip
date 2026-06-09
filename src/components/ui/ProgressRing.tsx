@@ -29,7 +29,7 @@ export function ProgressRing({ label, value, target, unit, tone = "leaf", minimu
   } as CSSProperties & Record<"--ring-color" | "--ring-progress" | "--ring-target", string>;
 
   return (
-    <div className="mobile-section mobile-surface grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 overflow-hidden rounded-lg border border-ink/10 bg-white p-4">
+    <div className="liquid-glass-surface mobile-section mobile-surface grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 overflow-hidden rounded-lg border border-ink/10 bg-white p-4">
       <div
         key={`${label}-${clamped}-${tone}-${isMinimumApproved ? "done" : "progress"}`}
         className="mobile-ring mobile-ring-fill grid h-24 w-24 shrink-0 place-items-center rounded-full"

@@ -180,7 +180,7 @@ export function AppLayout() {
         </nav>
       </aside>
       <div className="pb-24 md:ml-64 md:pb-0">
-        <header className="mobile-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
+        <header className="liquid-glass-topbar mobile-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-leaf">Calorie Tracker</p>
