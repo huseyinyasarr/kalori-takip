@@ -60,7 +60,7 @@ export function WaterGlassForm({ editingGlass, onSubmit, onCancel }: WaterGlassF
           {glassSizeOptions.map((option) => (
             <label key={option.value} className="cursor-pointer">
               <input className="peer sr-only" type="radio" value={option.value} {...register("size")} />
-              <span className="grid min-h-24 place-items-center rounded-md border border-ink/10 bg-white p-3 text-center transition peer-checked:border-leaf peer-checked:bg-mint peer-focus:ring-2 peer-focus:ring-leaf">
+              <span className="mobile-choice grid min-h-24 place-items-center rounded-md border border-ink/10 bg-white p-3 text-center transition peer-checked:border-leaf peer-checked:bg-mint peer-focus:ring-2 peer-focus:ring-leaf">
                 <GlassWater className={`${option.iconClass} text-leaf`} />
                 <span className="mt-2 text-xs font-semibold text-ink">{option.label}</span>
               </span>

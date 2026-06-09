@@ -58,7 +58,7 @@ export function SettingsPage() {
             <Input label="Hedef kilo" type="number" step="0.1" error={errors.targetWeight?.message} {...register("targetWeight")} />
           </div>
           <Button loading={isSubmitting}>Kaydet</Button>
-          {isSubmitSuccessful ? <p className="text-sm font-medium text-leaf">Ayarlar kaydedildi.</p> : null}
+          {isSubmitSuccessful ? <p className="mobile-success text-sm font-medium text-leaf">Ayarlar kaydedildi.</p> : null}
         </form>
       </Card>
       <p className="text-xs text-ink/50">Bu uygulama kişisel takip amaçlıdır, tıbbi tavsiye değildir.</p>

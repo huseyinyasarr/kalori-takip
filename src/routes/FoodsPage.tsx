@@ -165,8 +165,8 @@ export function FoodsPage() {
       </div>
 
       {foodModal ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6" onClick={() => closeFoodModal()}>
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
+        <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6" onClick={() => closeFoodModal()}>
+          <div className="mobile-modal-panel max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-ink">
@@ -214,8 +214,8 @@ export function FoodsPage() {
               }}
             />
             {isDiscardConfirmOpen ? (
-              <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-4" onClick={() => setIsDiscardConfirmOpen(false)}>
-                <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
+              <div className="mobile-modal-backdrop fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-4" onClick={() => setIsDiscardConfirmOpen(false)}>
+                <div className="mobile-modal-panel w-full max-w-sm rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
                   <h4 className="text-base font-bold text-ink">Kaydedilmemiş değişiklikler var</h4>
                   <p className="mt-2 text-sm text-ink/60">Formu kapatırsan yazdıkların silinecek.</p>
                   <div className="mt-4 flex flex-wrap justify-end gap-2">
@@ -296,7 +296,7 @@ export function FoodsPage() {
           {listError ? <p className="text-sm font-medium text-coral">{listError}</p> : null}
           {listLoading ? <p className="text-sm text-ink/60">Besinler yükleniyor...</p> : null}
           {!listLoading && !filteredFoods.length ? <EmptyState title="Besin bulunamadı" description="Arama, kaynak veya tür filtresini değiştir ya da ilk besinini ekle." /> : null}
-          <div className="grid gap-2">
+          <div className="mobile-list grid gap-2">
             {filteredFoods.map((food) => {
               const key = getFoodCatalogKey(food);
               const isSelected = selectedFoodKeys.includes(key);
@@ -382,7 +382,7 @@ export function FoodsPage() {
             {glassesError ? <p className="text-sm font-medium text-coral">{glassesError}</p> : null}
             {glassesLoading ? <p className="text-sm text-ink/60">Bardaklar yükleniyor...</p> : null}
             {!glassesLoading && !glasses.length ? <EmptyState title="Bardak bulunamadı" description="Su takibi için kullandığın bardak veya şişe ölçüsünü ekle." /> : null}
-            <div className="grid gap-2">
+            <div className="mobile-list grid gap-2">
               {glasses.map((glass) => {
                 const isGlobalGlass = glass.source === "global";
                 return (
@@ -430,7 +430,7 @@ export function FoodsPage() {
           {!myGlobalFoodsLoading && !myGlobalFoods.length ? (
             <EmptyState title="Global öneri yok" description="Global öneri gönderdiğinde onay durumunu burada görebilirsin." />
           ) : null}
-          <div className="grid gap-2">
+          <div className="mobile-list grid gap-2">
             {myGlobalFoods.map((food) => {
               const canManageSubmission = food.status === "pending" || food.status === "rejected";
               const nutritionUnit = getFoodNutritionUnit(food);

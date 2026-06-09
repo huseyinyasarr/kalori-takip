@@ -238,7 +238,7 @@ export function FoodForm({
         Örnek: su/soda 100, çorba 80, pilav/makarna 0. Besin değerleri 100 {selectedNutritionUnit ?? "g"} üzerinden hesaplanır.
       </p>
 
-      <div className="grid gap-2 rounded-md border border-ink/10 p-3">
+      <div className="mobile-reveal grid gap-2 rounded-md border border-ink/10 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-bold text-ink">Ölçüler</p>
@@ -249,7 +249,7 @@ export function FoodForm({
           </Button>
         </div>
         {errors.portions?.message ? <p className="text-xs font-medium text-coral">{errors.portions.message}</p> : null}
-        <div className="grid gap-2">
+        <div className="mobile-list grid gap-2">
           {fields.map((field, index) => (
             <div key={field.id} className="grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-end">
               <Input
@@ -281,7 +281,7 @@ export function FoodForm({
       </div>
 
       {isPublicOnly ? (
-        <p className="rounded-md bg-cloud px-3 py-2 text-xs font-medium text-ink/60">
+        <p className="mobile-reveal rounded-md bg-cloud px-3 py-2 text-xs font-medium text-ink/60">
           {role === "admin"
             ? "Bu formdan eklenen besin global katalog için kaydedilir."
             : "Bu formdan eklenen besin global kataloğa kaydedilmek için admin onayına gönderilir."}
@@ -300,7 +300,7 @@ export function FoodForm({
           {role === "editor" ? <span className="mt-1 block text-xs text-ink/55">Editör public kayıtları admin onayına düşer.</span> : null}
         </label>
       ) : isPrivateOnly ? (
-        <p className="rounded-md bg-cloud px-3 py-2 text-xs font-medium text-ink/60">Bu formdan eklenen besin yalnızca senin hesabında görünür.</p>
+        <p className="mobile-reveal rounded-md bg-cloud px-3 py-2 text-xs font-medium text-ink/60">Bu formdan eklenen besin yalnızca senin hesabında görünür.</p>
       ) : null}
 
       <div className="flex flex-wrap gap-2">

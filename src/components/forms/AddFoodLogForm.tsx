@@ -98,7 +98,7 @@ export function AddFoodLogForm({ foods, onAdd }: AddFoodLogFormProps) {
             />
           </div>
           {isFoodPickerOpen ? (
-            <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-ink/10 bg-white py-1 text-sm shadow-lg">
+            <div className="mobile-popover absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-ink/10 bg-white py-1 text-sm shadow-lg">
               {filteredFoods.length ? (
                 filteredFoods.map((food) => {
                   const foodKey = getFoodCatalogKey(food);
@@ -106,7 +106,7 @@ export function AddFoodLogForm({ foods, onAdd }: AddFoodLogFormProps) {
                   return (
                     <div
                       key={foodKey}
-                      className={`grid grid-cols-[1fr_auto] items-center gap-2 transition hover:bg-mint/60 ${foodKey === selectedFoodKey ? "bg-mint/80 text-ink" : "text-ink/80"}`}
+                      className={`mobile-choice grid grid-cols-[1fr_auto] items-center gap-2 transition hover:bg-mint/60 ${foodKey === selectedFoodKey ? "bg-mint/80 text-ink" : "text-ink/80"}`}
                     >
                       <button
                         type="button"
@@ -211,7 +211,7 @@ export function AddFoodLogForm({ foods, onAdd }: AddFoodLogFormProps) {
       </div>
 
       {selectedFood && preview ? (
-        <div className="rounded-md bg-mint p-3 text-sm text-ink">
+        <div className="mobile-success rounded-md bg-mint p-3 text-sm text-ink">
           <p className="font-bold">{selectedFood.name}</p>
           <p className="mt-1 text-ink/65">
             {grams} {selectedNutritionUnit} · {preview.calories} kcal · P {preview.protein} g · Y {preview.fat} g · K {preview.carbs} g
@@ -231,8 +231,8 @@ function GlobalPlateDetailModal({ food, onClose }: { food: Food; onClose: () => 
   const totalFluid = food.plateFluidMilliliters ?? calculateFluidFromFood(food, totalGrams);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft">
+    <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6">
+      <div className="mobile-modal-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-leaf">Global tabak detayı</p>
@@ -255,7 +255,7 @@ function GlobalPlateDetailModal({ food, onClose }: { food: Food; onClose: () => 
         {ingredients.length ? (
           <div className="grid gap-2">
             {ingredients.map((ingredient, index) => (
-              <div key={`${ingredient.foodId}-${index}`} className="rounded-md border border-ink/10 p-3">
+              <div key={`${ingredient.foodId}-${index}`} className="mobile-reveal rounded-md border border-ink/10 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-semibold text-ink">{ingredient.foodNameSnapshot}</p>
                   <span className="rounded-full bg-cloud px-2 py-0.5 text-xs font-bold text-ink/60">{ingredient.grams} g</span>

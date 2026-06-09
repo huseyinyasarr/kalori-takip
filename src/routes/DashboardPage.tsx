@@ -191,7 +191,7 @@ export function DashboardPage() {
               {foodFluidTotalMl ? <p className="mt-1 text-xs text-ink/50">Besinlerden gelen sıvı: {foodFluidTotalMl} ml.</p> : null}
               <div className="mt-4">
                 {glasses.length ? (
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="mobile-list grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {glasses.map((glass) => {
                       const size = glass.size ?? "medium";
                       const glassKey = getWaterGlassCatalogKey(glass);
@@ -214,7 +214,7 @@ export function DashboardPage() {
                           }}
                         >
                           {consumedCount ? (
-                            <span className="absolute right-2 top-2 rounded-full bg-leaf px-2 py-0.5 text-xs font-black text-white">
+                            <span className="mobile-success absolute right-2 top-2 rounded-full bg-leaf px-2 py-0.5 text-xs font-black text-white">
                               {consumedCount}x
                             </span>
                           ) : null}
@@ -258,7 +258,7 @@ export function DashboardPage() {
             </div>
             <div className="mt-4">
               {privatePlates.length ? (
-                <div className="max-h-72 overflow-y-auto rounded-md border border-ink/10">
+                <div className="mobile-list max-h-72 overflow-y-auto rounded-md border border-ink/10">
                   {privatePlates.map((plate) => {
                     const portionValue = platePortions[plate.id] ?? "1";
                     const portion = Number(portionValue || 1);
@@ -330,8 +330,8 @@ export function DashboardPage() {
                         </div>
 
                         {isCustomizing ? (
-                          <div className="mt-3 grid gap-3 rounded-md bg-cloud p-3">
-                            <div className="grid gap-2">
+                          <div className="mobile-reveal mt-3 grid gap-3 rounded-md bg-cloud p-3">
+                            <div className="mobile-list grid gap-2">
                               {customIngredients.map((item, index) => (
                                 <div key={`${item.foodId}-${index}`} className="grid gap-2 md:grid-cols-[1fr_96px_auto] md:items-end">
                                   <div className="min-w-0">
@@ -483,7 +483,7 @@ export function DashboardPage() {
         <Card>
           <h3 className="text-lg font-bold text-ink">Kilo</h3>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-md p-3" style={{ backgroundColor: `${currentWeightColor.replace("rgb", "rgba").replace(")", ", 0.14)")}` }}>
+            <div className="mobile-reveal rounded-md p-3" style={{ backgroundColor: `${currentWeightColor.replace("rgb", "rgba").replace(")", ", 0.14)")}` }}>
               <p className="text-xs font-semibold" style={{ color: currentWeightColor }}>
                 Güncel
               </p>
@@ -491,7 +491,7 @@ export function DashboardPage() {
                 {profile.currentWeight} kg
               </p>
             </div>
-            <div className="rounded-md bg-mint p-3">
+            <div className="mobile-reveal rounded-md bg-mint p-3">
               <p className="text-xs font-semibold text-leaf">Hedef</p>
               <p className="mt-1 text-2xl font-black text-leaf">{profile.targetWeight} kg</p>
             </div>
@@ -504,7 +504,7 @@ export function DashboardPage() {
         {error ? <p className="mt-3 text-sm font-medium text-coral">{error}</p> : null}
         {loading ? <p className="mt-3 text-sm text-ink/60">Kayıtlar yükleniyor...</p> : null}
         {!loading && !logs.length ? <EmptyState title="Bugün kayıt yok" description="İlk öğününü eklediğinde günlük toplamların otomatik güncellenir." /> : null}
-        <div className="mt-4 grid gap-2">
+        <div className="mobile-list mt-4 grid gap-2">
           {logs.map((log) => (
             <div key={log.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>
@@ -553,7 +553,7 @@ export function DashboardPage() {
         {waterError ? <p className="mt-3 text-sm font-medium text-coral">{waterError}</p> : null}
         {waterLoading ? <p className="mt-3 text-sm text-ink/60">Su kayıtları yükleniyor...</p> : null}
         {!waterLoading && !waterLogs.length ? <EmptyState title="Bugün su kaydı yok" description="İçtiğin suyu bardak seçerek eklediğinde hedefin otomatik güncellenir." /> : null}
-        <div className="mt-4 grid gap-2">
+        <div className="mobile-list mt-4 grid gap-2">
           {waterLogs.map((log) => (
             <div key={log.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>

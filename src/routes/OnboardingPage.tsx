@@ -32,7 +32,7 @@ export function OnboardingPage() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
-      <Card className="w-full max-w-xl">
+      <Card className="mobile-screen w-full max-w-xl">
         <p className="text-xs font-semibold uppercase tracking-wide text-leaf">İlk kurulum</p>
         <h1 className="mt-1 text-2xl font-black text-ink">Hedeflerini oluşturalım</h1>
         <p className="mt-2 text-sm text-ink/65">Bu bilgiler günlük kalori ve minimum makro hedeflerini hesaplamak için kullanılır.</p>

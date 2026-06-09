@@ -23,6 +23,14 @@ select {
   font: inherit;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @media (max-width: 768px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
   select,
@@ -33,4 +41,463 @@ select {
 
 .recharts-wrapper {
   max-width: 100%;
+}
+
+@property --ring-progress {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+@media (max-width: 767px) {
+  .liquid-glass-nav {
+    overflow: visible;
+    box-shadow:
+      0 12px 32px rgba(23, 32, 28, 0.14),
+      0 1px 5px rgba(255, 255, 255, 0.5) inset,
+      0 -1px 0 rgba(23, 32, 28, 0.08) inset;
+    -webkit-backdrop-filter: blur(22px) saturate(1.45);
+    backdrop-filter: blur(22px) saturate(1.45);
+  }
+
+  .liquid-glass-nav::before,
+  .liquid-glass-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 18% -8%, rgba(255, 255, 255, 0.5), transparent 18%),
+      radial-gradient(ellipse at 88% 18%, rgba(255, 255, 255, 0.32), transparent 22%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.12) 46%, rgba(223, 244, 231, 0.16));
+    opacity: 0.72;
+  }
+
+  .liquid-glass-nav::after,
+  .liquid-glass-menu::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.88) inset,
+      0 -1px 0 rgba(23, 32, 28, 0.08) inset;
+  }
+
+  .liquid-glass-nav > *,
+  .liquid-glass-menu > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .liquid-glass-menu {
+    box-shadow:
+      0 22px 52px rgba(23, 32, 28, 0.18),
+      0 1px 0 rgba(255, 255, 255, 0.86) inset;
+    -webkit-backdrop-filter: blur(30px) saturate(1.7);
+    backdrop-filter: blur(30px) saturate(1.7);
+  }
+
+  .liquid-glass-active {
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    background:
+      radial-gradient(circle at 24% 0%, rgba(255, 255, 255, 0.95), transparent 34%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(223, 244, 231, 0.68));
+    box-shadow:
+      0 10px 24px rgba(47, 125, 91, 0.14),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 -1px 0 rgba(47, 125, 91, 0.1) inset;
+  }
+
+  .mobile-main-nav {
+    transform-origin: bottom center;
+    align-items: center;
+  }
+
+  .mobile-main-nav-item {
+    overflow: hidden;
+    transform-origin: center;
+    transition:
+      min-height 300ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+      border-radius 300ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+      background-color 180ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+      box-shadow 180ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+      transform 180ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  .mobile-nav-label {
+    line-height: 1;
+    max-height: 0.75rem;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition:
+      max-height 260ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+      opacity 180ms ease,
+      transform 260ms var(--mobile-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+
+  .liquid-glass-nav-compact {
+    left: clamp(0.75rem, 8vw, 3rem);
+    right: clamp(0.75rem, 8vw, 3rem);
+    border-radius: 1.25rem;
+  }
+
+  .liquid-glass-nav-compact .mobile-main-nav {
+    gap: 0.125rem;
+    padding: 0.25rem;
+  }
+
+  .liquid-glass-nav-compact .mobile-main-nav-item {
+    min-height: 2.35rem;
+    border-radius: 1rem;
+  }
+
+  .liquid-glass-nav-compact .mobile-nav-label {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.9);
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  :root {
+    --mobile-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --mobile-snap: cubic-bezier(0.2, 0.9, 0.24, 1.14);
+  }
+
+  .mobile-screen > * {
+    animation: mobile-rise-in 360ms var(--mobile-ease) both;
+  }
+
+  .mobile-screen > *:nth-child(1) {
+    animation-delay: 20ms;
+  }
+
+  .mobile-screen > *:nth-child(2) {
+    animation-delay: 70ms;
+  }
+
+  .mobile-screen > *:nth-child(3) {
+    animation-delay: 110ms;
+  }
+
+  .mobile-screen > *:nth-child(4) {
+    animation-delay: 145ms;
+  }
+
+  .mobile-screen > *:nth-child(5) {
+    animation-delay: 175ms;
+  }
+
+  .mobile-screen > *:nth-child(n + 6) {
+    animation-delay: 205ms;
+  }
+
+  .mobile-section,
+  .mobile-reveal {
+    animation: mobile-rise-in 320ms var(--mobile-ease) both;
+  }
+
+  .mobile-list > * {
+    animation: mobile-list-in 280ms var(--mobile-ease) both;
+  }
+
+  .mobile-list > *:nth-child(1) {
+    animation-delay: 20ms;
+  }
+
+  .mobile-list > *:nth-child(2) {
+    animation-delay: 55ms;
+  }
+
+  .mobile-list > *:nth-child(3) {
+    animation-delay: 90ms;
+  }
+
+  .mobile-list > *:nth-child(4) {
+    animation-delay: 125ms;
+  }
+
+  .mobile-list > *:nth-child(5) {
+    animation-delay: 160ms;
+  }
+
+  .mobile-list > *:nth-child(6) {
+    animation-delay: 195ms;
+  }
+
+  .mobile-list > *:nth-child(n + 7) {
+    animation-delay: 225ms;
+  }
+
+  .mobile-topbar {
+    animation: mobile-topbar-in 360ms var(--mobile-ease) both;
+  }
+
+  .mobile-nav-shell {
+    animation: mobile-nav-in 420ms var(--mobile-ease) both;
+  }
+
+  .mobile-nav-item,
+  .mobile-tap,
+  .mobile-choice {
+    transform: translateZ(0);
+    transition-duration: 180ms;
+    transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+    transition-timing-function: var(--mobile-ease);
+  }
+
+  .mobile-nav-item:active,
+  .mobile-tap:active,
+  .mobile-choice:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-surface {
+    transform: translateZ(0);
+    transition: border-color 220ms var(--mobile-ease), box-shadow 220ms var(--mobile-ease), transform 220ms var(--mobile-ease);
+  }
+
+  .mobile-surface:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 20px 46px rgba(23, 32, 28, 0.1);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    transition-duration: 190ms;
+    transition-property: background-color, border-color, box-shadow, transform;
+    transition-timing-function: var(--mobile-ease);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+  select:focus,
+  textarea:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 4px rgba(223, 244, 231, 0.9);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    transition: transform 160ms var(--mobile-snap), box-shadow 160ms var(--mobile-ease);
+  }
+
+  input[type="checkbox"]:active,
+  input[type="radio"]:active {
+    transform: scale(0.88);
+  }
+
+  input[type="checkbox"]:checked,
+  input[type="radio"]:checked {
+    animation: mobile-control-pop 220ms var(--mobile-snap) both;
+  }
+
+  .mobile-popover {
+    transform-origin: top center;
+    animation: mobile-popover-in 210ms var(--mobile-ease) both;
+  }
+
+  .mobile-menu-sheet {
+    transform-origin: bottom center;
+  }
+
+  .mobile-modal-backdrop {
+    animation: mobile-fade-in 200ms ease-out both;
+  }
+
+  .mobile-modal-panel {
+    animation: mobile-sheet-in 280ms var(--mobile-ease) both;
+  }
+
+  .mobile-ring {
+    animation: mobile-ring-in 480ms var(--mobile-snap) both;
+  }
+
+  .mobile-ring.mobile-ring-fill {
+    animation: mobile-ring-in 480ms var(--mobile-snap) both, mobile-ring-fill 900ms var(--mobile-ease) 120ms both;
+  }
+
+  .mobile-ring > * {
+    animation: mobile-inner-pop 420ms var(--mobile-snap) both;
+    animation-delay: 120ms;
+  }
+
+  .mobile-chart {
+    animation: mobile-chart-in 440ms var(--mobile-ease) both;
+  }
+
+  .mobile-success {
+    animation: mobile-success-in 360ms var(--mobile-snap) both;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .mobile-screen *,
+  .mobile-section,
+  .mobile-reveal,
+  .mobile-list > *,
+  .mobile-topbar,
+  .mobile-nav-shell,
+  .mobile-nav-item,
+  .mobile-tap,
+  .mobile-choice,
+  .mobile-surface,
+  .mobile-popover,
+  .mobile-menu-sheet,
+  .mobile-modal-backdrop,
+  .mobile-modal-panel,
+  .mobile-ring,
+  .mobile-ring-fill,
+  .mobile-chart,
+  .mobile-success {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@keyframes mobile-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-list-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes mobile-topbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-nav-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-ring-in {
+  from {
+    opacity: 0;
+    transform: rotate(-16deg) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes mobile-ring-fill {
+  from {
+    --ring-progress: 0%;
+  }
+  to {
+    --ring-progress: var(--ring-target);
+  }
+}
+
+@keyframes mobile-inner-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes mobile-control-pop {
+  0% {
+    transform: scale(0.82);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes mobile-chart-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scaleY(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes mobile-success-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

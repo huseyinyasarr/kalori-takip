@@ -103,7 +103,7 @@ export function HistoryPage() {
         <ProgressRing label="Saf su" value={pureWaterTotalLiter} target={DEFAULT_PURE_WATER_TARGET_LITER} unit="L" tone="leaf" />
         <ProgressRing label="Toplam sıvı" value={totalFluidLiter} target={fluidTargetLiter} unit="L" tone="ink" />
       </div>
-      <p className="text-xs font-medium text-ink/50">Hedefler {effectiveWeight.toLocaleString("tr-TR")} kg kaydına göre hesaplandı.</p>
+      <p className="mobile-reveal text-xs font-medium text-ink/50">Hedefler {effectiveWeight.toLocaleString("tr-TR")} kg kaydına göre hesaplandı.</p>
       {weightError ? <p className="text-sm font-medium text-coral">{weightError}</p> : null}
       {waterError ? <p className="text-sm font-medium text-coral">{waterError}</p> : null}
       {waterLoading ? <p className="text-sm text-ink/60">Su kayıtları yükleniyor...</p> : null}
@@ -192,7 +192,7 @@ export function HistoryPage() {
         {error ? <p className="mt-3 text-sm font-medium text-coral">{error}</p> : null}
         {loading ? <p className="mt-3 text-sm text-ink/60">Kayıtlar yükleniyor...</p> : null}
         {!loading && !logs.length ? <EmptyState title="Bu tarihte kayıt yok" /> : null}
-        <div className="mt-4 grid gap-2">
+        <div className="mobile-list mt-4 grid gap-2">
           {logs.map((log) => (
             <div key={log.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>

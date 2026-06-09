@@ -112,13 +112,13 @@ export function PlatesPage() {
                   />
                 </div>
                 {isFoodPickerOpen ? (
-                  <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-ink/10 bg-white py-1 text-sm shadow-lg">
+                  <div className="mobile-popover absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-ink/10 bg-white py-1 text-sm shadow-lg">
                     {filteredFoods.length ? (
                       filteredFoods.map((food) => (
                         <button
                           key={getFoodCatalogKey(food)}
                           type="button"
-                          className={`block w-full px-3 py-2 text-left transition hover:bg-mint/60 ${getFoodCatalogKey(food) === foodId ? "bg-mint/80 font-semibold text-ink" : "text-ink/80"}`}
+                          className={`mobile-choice block w-full px-3 py-2 text-left transition hover:bg-mint/60 ${getFoodCatalogKey(food) === foodId ? "bg-mint/80 font-semibold text-ink" : "text-ink/80"}`}
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => {
                             setFoodSearch(food.name);
@@ -178,7 +178,7 @@ export function PlatesPage() {
 
             {!foods.length ? <EmptyState title="Besin yok" description="Tabak hazırlamak için önce Besinler sayfasından kayıt ekle." /> : null}
 
-            <div className="grid gap-2">
+            <div className="mobile-list grid gap-2">
               {ingredients.map((item, index) => (
                 <div key={`${item.foodId}-${index}`} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_120px_auto] md:items-end">
                   <div>
@@ -225,7 +225,7 @@ export function PlatesPage() {
               ))}
             </div>
 
-            <div className="grid gap-2 rounded-md bg-mint p-3 text-sm text-ink sm:grid-cols-2">
+            <div className="mobile-success grid gap-2 rounded-md bg-mint p-3 text-sm text-ink sm:grid-cols-2">
               <p>
                 <span className="font-semibold text-leaf">Toplam:</span> {totalGrams} g
               </p>
@@ -282,7 +282,7 @@ export function PlatesPage() {
           {!loading && !plates.length ? (
             <EmptyState title="Tabak yok" description={error ? "Kayıtlı tabak bulunamadı. İlk tabağını kaydettiğinde burada listelenir." : "Sık yediğin öğünleri kaydettiğinde burada listelenir."} />
           ) : null}
-          <div className="grid gap-2">
+          <div className="mobile-list grid gap-2">
             {plates.map((plate) => {
               const canManagePlate = plate.source !== "global" || isAdmin;
               return (
@@ -336,7 +336,7 @@ export function PlatesPage() {
           {!myGlobalPlatesLoading && !myGlobalPlates.length ? (
             <EmptyState title="Global tabak önerisi yok" description="Herkese açık seçeneğiyle tabak eklediğinde onay durumunu burada görebilirsin." />
           ) : null}
-          <div className="grid gap-2">
+          <div className="mobile-list grid gap-2">
             {myGlobalPlates.map((plate) => {
               const canManageSubmission = isAdmin || plate.status === "pending" || plate.status === "rejected";
               return (

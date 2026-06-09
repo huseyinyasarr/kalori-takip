@@ -44,8 +44,8 @@ export function WeightPromptModal({ profile }: { profile: UserProfile }) {
   const weightRegister = register("weight");
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-soft">
+    <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4">
+      <div className="mobile-modal-panel w-full max-w-md rounded-lg bg-white p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-md bg-mint text-leaf">
             <Scale className="h-5 w-5" />

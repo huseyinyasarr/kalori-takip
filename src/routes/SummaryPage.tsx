@@ -598,7 +598,7 @@ function ChartTitle({ title, compliance }: { title: string; compliance?: number 
   return (
     <div className="mb-4 flex items-start justify-between gap-3">
       <h3 className="text-lg font-bold text-ink">{title}</h3>
-      <div className="shrink-0 rounded-md bg-mint px-2.5 py-1 text-right">
+      <div className="mobile-success shrink-0 rounded-md bg-mint px-2.5 py-1 text-right">
         <p className="text-[10px] font-bold uppercase tracking-wide text-ink/55">Hedef uyumu</p>
         <p className="text-sm font-black text-ink">{typeof compliance === "number" ? `${compliance}%` : "-"}</p>
       </div>
@@ -611,7 +611,7 @@ function FilterButton({ active, children, onClick }: { active: boolean; children
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-9 rounded px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-leaf ${
+      className={`mobile-tap min-h-9 rounded px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-leaf ${
         active ? "bg-white text-ink shadow-soft" : "text-ink/65 hover:bg-white/70 hover:text-ink"
       }`}
     >

@@ -37,7 +37,7 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
-      <div className="w-full max-w-md">
+      <div className="mobile-screen w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-lg bg-leaf text-white">
             <Activity className="h-6 w-6" />

@@ -209,14 +209,14 @@ export function AdminPage() {
         ) : null}
         {selectedFoodPublishError ? <p className="mb-3 text-sm font-medium text-coral">{selectedFoodPublishError}</p> : null}
         {selectedFoodPublishResult ? (
-          <p className="mb-3 rounded-md bg-mint p-3 text-sm font-semibold text-ink">
+          <p className="mobile-success mb-3 rounded-md bg-mint p-3 text-sm font-semibold text-ink">
             Aktarıldı: {selectedFoodPublishResult.published} besin.
             {selectedFoodPublishResult.skippedDuplicates.length
               ? ` Aynı isim nedeniyle eklenmeyenler: ${selectedFoodPublishResult.skippedDuplicates.join(", ")}.`
               : ""}
           </p>
         ) : null}
-        <div className="grid gap-2">
+        <div className="mobile-list grid gap-2">
           {filteredPrivateFoods.map((food) => {
             const isDuplicate = globalFoodNameSet.has(normalizeCatalogName(food.name));
             const isSelected = selectedPrivateFoodIds.includes(food.id);
@@ -240,7 +240,7 @@ export function AdminPage() {
         </p>
         {publishError ? <p className="mt-3 text-sm font-medium text-coral">{publishError}</p> : null}
         {publishResult ? (
-          <p className="mt-3 rounded-md bg-mint p-3 text-sm font-semibold text-ink">
+          <p className="mobile-success mt-3 rounded-md bg-mint p-3 text-sm font-semibold text-ink">
             Yayınlandı: {publishResult.foods} besin, {publishResult.plates} tabak, {publishResult.waterGlasses} bardak.
             {publishResult.skippedDuplicateFoods.length
               ? ` Aynı isim nedeniyle eklenmeyen besinler: ${publishResult.skippedDuplicateFoods.join(", ")}.`
@@ -262,7 +262,7 @@ export function AdminPage() {
         {foodsError ? <p className="text-sm font-medium text-coral">{foodsError}</p> : null}
         {foodsLoading ? <p className="text-sm text-ink/60">Besinler yükleniyor...</p> : null}
         {!foodsLoading && !foods.length ? <EmptyState title="Bekleyen besin yok" description="Yeni öneriler geldiğinde burada görünür." /> : null}
-        <div className="grid gap-2">
+        <div className="mobile-list grid gap-2">
           {foods.map((food) => (
             <PendingFoodCard key={food.id} food={food} busyKey={busyKey} onModerate={moderateFood} />
           ))}
@@ -274,7 +274,7 @@ export function AdminPage() {
         {platesError ? <p className="text-sm font-medium text-coral">{platesError}</p> : null}
         {platesLoading ? <p className="text-sm text-ink/60">Tabaklar yükleniyor...</p> : null}
         {!platesLoading && !plates.length ? <EmptyState title="Bekleyen tabak yok" description="Yeni öneriler geldiğinde burada görünür." /> : null}
-        <div className="grid gap-2">
+        <div className="mobile-list grid gap-2">
           {plates.map((plate) => (
             <div key={plate.id} className="grid gap-3 rounded-md border border-ink/10 p-3 md:grid-cols-[1fr_auto] md:items-start">
               <div>
