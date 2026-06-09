@@ -105,7 +105,7 @@ export function AppLayout() {
       >
         <div className="hidden p-5 md:block">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="" className="h-11 w-11 shrink-0 rounded-xl shadow-soft" />
+            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-11 w-11 shrink-0 rounded-xl shadow-soft" />
             <div className="min-w-0">
               <p className="text-xl font-black leading-tight text-ink">Kalori Takip</p>
               <p className="mt-1 text-xs text-ink/55">Kişisel takip aracın</p>
@@ -188,7 +188,7 @@ export function AppLayout() {
         <header className="liquid-glass-topbar mobile-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <img src="/logo.svg" alt="" className="h-10 w-10 shrink-0 rounded-xl shadow-soft" />
+              <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-10 w-10 shrink-0 rounded-xl shadow-soft" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-leaf">Calorie Tracker</p>
                 <h1 className="truncate text-lg font-bold text-ink">{profile?.fullName || "Kalori Takip"}</h1>

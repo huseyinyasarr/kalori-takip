@@ -39,7 +39,7 @@ export function LoginPage() {
     <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
       <div className="mobile-screen w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
-          <img src="/logo.svg" alt="" className="h-14 w-14 shrink-0 rounded-2xl shadow-soft" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-14 w-14 shrink-0 rounded-2xl shadow-soft" />
           <div>
             <h1 className="text-2xl font-black text-ink">Kalori Takip</h1>
             <p className="text-sm text-ink/60">Kalori, makro ve kilo takibi.</p>
