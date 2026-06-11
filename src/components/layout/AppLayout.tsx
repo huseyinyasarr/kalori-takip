@@ -184,7 +184,7 @@ export function AppLayout() {
           ))}
         </nav>
       </aside>
-      <div className="relative pb-24 md:ml-64 md:pb-0">
+      <div className="desktop-main-shell relative pb-24 md:ml-64 md:pb-0">
         <header className="liquid-glass-topbar mobile-topbar desktop-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -213,7 +213,7 @@ export function AppLayout() {
             </div>
           </div>
         </header>
-        <main className="mobile-screen desktop-content mx-auto max-w-6xl px-4 py-5 md:px-8">
+        <main key={location.pathname} className="mobile-screen desktop-content mx-auto max-w-6xl px-4 py-5 md:px-8">
           <Outlet />
         </main>
       </div>

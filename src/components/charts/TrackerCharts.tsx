@@ -19,8 +19,10 @@ export interface ChartPoint {
 }
 
 export function CaloriesChart({ data }: { data: ChartPoint[] }) {
+  const chartKey = getChartKey(data, ["calories", "calorieTarget", "calorieAverage"]);
+
   return (
-    <div className="mobile-chart">
+    <div key={chartKey} className="mobile-chart chart-motion">
       <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
@@ -28,7 +30,7 @@ export function CaloriesChart({ data }: { data: ChartPoint[] }) {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="calories" name="Alınan kalori" fill="#2f7d5b" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="calories" name="Alınan kalori" fill="#2f7d5b" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={850} animationEasing="ease-out" />
           <Line
             type="monotone"
             dataKey="calorieTarget"
@@ -37,6 +39,9 @@ export function CaloriesChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="6 4"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
@@ -46,6 +51,9 @@ export function CaloriesChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="3 5"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -54,8 +62,10 @@ export function CaloriesChart({ data }: { data: ChartPoint[] }) {
 }
 
 export function ProteinChart({ data }: { data: ChartPoint[] }) {
+  const chartKey = getChartKey(data, ["protein", "proteinTarget", "proteinAverage"]);
+
   return (
-    <div className="mobile-chart">
+    <div key={chartKey} className="mobile-chart chart-motion">
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
@@ -63,7 +73,7 @@ export function ProteinChart({ data }: { data: ChartPoint[] }) {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="protein" name="Alınan protein" stroke="#ef7d63" strokeWidth={3} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="protein" name="Alınan protein" stroke="#ef7d63" strokeWidth={3} dot={{ r: 3 }} isAnimationActive animationDuration={850} animationEasing="ease-out" />
           <Line
             type="monotone"
             dataKey="proteinTarget"
@@ -72,6 +82,9 @@ export function ProteinChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="6 4"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
@@ -81,6 +94,9 @@ export function ProteinChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="3 5"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
         </LineChart>
       </ResponsiveContainer>
@@ -89,15 +105,17 @@ export function ProteinChart({ data }: { data: ChartPoint[] }) {
 }
 
 export function WeightChart({ data }: { data: ChartPoint[] }) {
+  const chartKey = getChartKey(data, ["weight"]);
+
   return (
-    <div className="mobile-chart">
+    <div key={chartKey} className="mobile-chart chart-motion">
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
           <XAxis dataKey="label" />
           <YAxis domain={["dataMin - 2", "dataMax + 2"]} />
           <Tooltip />
-          <Line type="monotone" dataKey="weight" name="Kilo" stroke="#17201c" strokeWidth={3} dot={{ r: 3 }} connectNulls />
+          <Line type="monotone" dataKey="weight" name="Kilo" stroke="#17201c" strokeWidth={3} dot={{ r: 3 }} connectNulls isAnimationActive animationDuration={850} animationEasing="ease-out" />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -105,8 +123,10 @@ export function WeightChart({ data }: { data: ChartPoint[] }) {
 }
 
 export function WaterChart({ data }: { data: ChartPoint[] }) {
+  const chartKey = getChartKey(data, ["waterLiter", "waterTargetLiter", "waterAverageLiter"]);
+
   return (
-    <div className="mobile-chart">
+    <div key={chartKey} className="mobile-chart chart-motion">
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
@@ -114,7 +134,7 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
           <YAxis unit=" L" />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="waterLiter" name="Toplam sıvı" stroke="#2f7d5b" strokeWidth={3} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="waterLiter" name="Toplam sıvı" stroke="#2f7d5b" strokeWidth={3} dot={{ r: 3 }} isAnimationActive animationDuration={850} animationEasing="ease-out" />
           <Line
             type="monotone"
             dataKey="waterTargetLiter"
@@ -123,6 +143,9 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="6 4"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
@@ -132,6 +155,9 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="3 5"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
         </LineChart>
       </ResponsiveContainer>
@@ -140,8 +166,10 @@ export function WaterChart({ data }: { data: ChartPoint[] }) {
 }
 
 export function PureWaterChart({ data }: { data: ChartPoint[] }) {
+  const chartKey = getChartKey(data, ["pureWaterLiter", "pureWaterTargetLiter", "pureWaterAverageLiter"]);
+
   return (
-    <div className="mobile-chart">
+    <div key={chartKey} className="mobile-chart chart-motion">
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dfe7e1" />
@@ -149,7 +177,7 @@ export function PureWaterChart({ data }: { data: ChartPoint[] }) {
           <YAxis unit=" L" />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="pureWaterLiter" name="İçilen su" stroke="#1d8fb8" strokeWidth={3} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="pureWaterLiter" name="İçilen su" stroke="#1d8fb8" strokeWidth={3} dot={{ r: 3 }} isAnimationActive animationDuration={850} animationEasing="ease-out" />
           <Line
             type="monotone"
             dataKey="pureWaterTargetLiter"
@@ -158,6 +186,9 @@ export function PureWaterChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="6 4"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
@@ -167,9 +198,16 @@ export function PureWaterChart({ data }: { data: ChartPoint[] }) {
             strokeDasharray="3 5"
             strokeWidth={3}
             dot={false}
+            isAnimationActive
+            animationDuration={850}
+            animationEasing="ease-out"
           />
         </LineChart>
       </ResponsiveContainer>
     </div>
   );
+}
+
+function getChartKey(data: ChartPoint[], keys: Array<keyof ChartPoint>) {
+  return data.map((point) => [point.date, ...keys.map((key) => point[key] ?? "")].join(":")).join("|");
 }
