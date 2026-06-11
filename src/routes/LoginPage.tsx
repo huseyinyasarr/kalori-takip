@@ -36,7 +36,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
+    <div className="desktop-liquid-shell grid min-h-screen place-items-center bg-cloud px-4 py-8">
       <div className="mobile-screen w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-14 w-14 shrink-0 rounded-2xl shadow-soft" />

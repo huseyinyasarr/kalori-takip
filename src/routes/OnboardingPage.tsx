@@ -31,7 +31,7 @@ export function OnboardingPage() {
   });
 
   return (
-    <div className="grid min-h-screen place-items-center bg-cloud px-4 py-8">
+    <div className="desktop-liquid-shell grid min-h-screen place-items-center bg-cloud px-4 py-8">
       <Card className="mobile-screen w-full max-w-xl">
         <p className="text-xs font-semibold uppercase tracking-wide text-leaf">İlk kurulum</p>
         <h1 className="mt-1 text-2xl font-black text-ink">Hedeflerini oluşturalım</h1>

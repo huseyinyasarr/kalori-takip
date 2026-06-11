@@ -6,8 +6,8 @@ import { LoadingScreen } from "../components/ui/LoadingScreen";
 
 function ProfileLoadError({ message }: { message: string }) {
   return (
-    <div className="grid min-h-screen place-items-center bg-cloud px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-5 text-center shadow-soft">
+    <div className="desktop-liquid-shell grid min-h-screen place-items-center bg-cloud px-4">
+      <div className="liquid-glass-surface w-full max-w-md rounded-lg bg-white p-5 text-center shadow-soft">
         <h1 className="text-lg font-bold text-ink">Veriler yüklenemedi</h1>
         <p className="mt-2 text-sm text-ink/65">{message}</p>
         <button

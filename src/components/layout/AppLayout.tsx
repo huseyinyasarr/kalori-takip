@@ -97,9 +97,9 @@ export function AppLayout() {
   }, [isMoreMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-cloud">
+    <div className="desktop-liquid-shell min-h-screen bg-cloud">
       <aside
-        className={`mobile-nav-shell liquid-glass-nav fixed inset-x-3 bottom-[calc(0.45rem+env(safe-area-inset-bottom))] z-40 rounded-[1.45rem] border border-white/55 bg-white/45 transition-all duration-300 ease-out md:inset-x-auto md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-64 md:rounded-none md:border-0 md:border-r md:border-ink/10 md:bg-white ${
+        className={`mobile-nav-shell liquid-glass-nav desktop-sidebar fixed inset-x-3 bottom-[calc(0.45rem+env(safe-area-inset-bottom))] z-40 rounded-[1.45rem] border border-white/55 bg-white/45 transition-all duration-300 ease-out md:inset-x-auto md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-64 md:rounded-none md:border-0 md:border-r md:border-ink/10 md:bg-white ${
           isMobileNavCompact ? "liquid-glass-nav-compact" : "liquid-glass-nav-expanded"
         }`}
       >
@@ -173,8 +173,8 @@ export function AppLayout() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition md:flex-row md:justify-start md:px-3 md:text-sm ${
-                  isActive ? "bg-mint text-leaf" : "text-ink/65 hover:bg-ink/5 hover:text-ink"
+                `desktop-nav-item flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition md:flex-row md:justify-start md:px-3 md:text-sm ${
+                  isActive ? "desktop-nav-active bg-mint text-leaf" : "text-ink/65 hover:bg-ink/5 hover:text-ink"
                 }`
               }
             >
@@ -184,8 +184,8 @@ export function AppLayout() {
           ))}
         </nav>
       </aside>
-      <div className="pb-24 md:ml-64 md:pb-0">
-        <header className="liquid-glass-topbar mobile-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
+      <div className="relative pb-24 md:ml-64 md:pb-0">
+        <header className="liquid-glass-topbar mobile-topbar desktop-topbar sticky top-0 z-30 border-b border-ink/10 bg-cloud/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-10 w-10 shrink-0 rounded-xl shadow-soft" />
@@ -213,7 +213,7 @@ export function AppLayout() {
             </div>
           </div>
         </header>
-        <main className="mobile-screen mx-auto max-w-6xl px-4 py-5 md:px-8">
+        <main className="mobile-screen desktop-content mx-auto max-w-6xl px-4 py-5 md:px-8">
           <Outlet />
         </main>
       </div>
