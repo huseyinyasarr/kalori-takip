@@ -7,6 +7,7 @@ import type { Food, FoodPortion } from "../../types";
 import { calculateFluidFromFood, calculateMacroFromFood, getFoodNutritionUnit } from "../../utils/calculations";
 import { getFoodCatalogKey } from "../../utils/catalog";
 import { Button } from "../ui/Button";
+import { ModalPortal } from "../ui/ModalPortal";
 
 const schema = z.object({
   foodKey: z.string().min(1, "Besin seçmelisin."),
@@ -231,47 +232,49 @@ function GlobalPlateDetailModal({ food, onClose }: { food: Food; onClose: () => 
   const totalFluid = food.plateFluidMilliliters ?? calculateFluidFromFood(food, totalGrams);
 
   return (
-    <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6">
-      <div className="mobile-modal-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-leaf">Global tabak detayı</p>
-            <h3 className="text-xl font-black text-ink">{food.name}</h3>
-            <p className="mt-1 text-sm text-ink/60">
-              {totalGrams} g · {Math.round(food.caloriesPer100g * totalGrams / 100)} kcal
-              {totalFluid ? ` · Sıvı ${totalFluid} ml` : ""}
-            </p>
+    <ModalPortal>
+      <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6">
+        <div className="mobile-modal-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-leaf">Global tabak detayı</p>
+              <h3 className="text-xl font-black text-ink">{food.name}</h3>
+              <p className="mt-1 text-sm text-ink/60">
+                {totalGrams} g · {Math.round(food.caloriesPer100g * totalGrams / 100)} kcal
+                {totalFluid ? ` · Sıvı ${totalFluid} ml` : ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rounded-full p-2 text-ink/50 transition hover:bg-cloud hover:text-ink"
+              aria-label="Pencereyi kapat"
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            className="rounded-full p-2 text-ink/50 transition hover:bg-cloud hover:text-ink"
-            aria-label="Pencereyi kapat"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        {ingredients.length ? (
-          <div className="grid gap-2">
-            {ingredients.map((ingredient, index) => (
-              <div key={`${ingredient.foodId}-${index}`} className="mobile-reveal rounded-md border border-ink/10 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold text-ink">{ingredient.foodNameSnapshot}</p>
-                  <span className="rounded-full bg-cloud px-2 py-0.5 text-xs font-bold text-ink/60">{ingredient.grams} g</span>
+          {ingredients.length ? (
+            <div className="grid gap-2">
+              {ingredients.map((ingredient, index) => (
+                <div key={`${ingredient.foodId}-${index}`} className="mobile-reveal rounded-md border border-ink/10 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold text-ink">{ingredient.foodNameSnapshot}</p>
+                    <span className="rounded-full bg-cloud px-2 py-0.5 text-xs font-bold text-ink/60">{ingredient.grams} g</span>
+                  </div>
+                  <p className="mt-1 text-sm text-ink/60">
+                    {ingredient.calories} kcal · P {ingredient.protein} g · Y {ingredient.fat} g · K {ingredient.carbs} g
+                    {ingredient.fluidMilliliters ? ` · Sıvı ${ingredient.fluidMilliliters} ml` : ""}
+                  </p>
                 </div>
-                <p className="mt-1 text-sm text-ink/60">
-                  {ingredient.calories} kcal · P {ingredient.protein} g · Y {ingredient.fat} g · K {ingredient.carbs} g
-                  {ingredient.fluidMilliliters ? ` · Sıvı ${ingredient.fluidMilliliters} ml` : ""}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-md bg-cloud p-3 text-sm text-ink/60">Bu tabak için içerik detayı bulunamadı.</p>
-        )}
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-md bg-cloud p-3 text-sm text-ink/60">Bu tabak için içerik detayı bulunamadı.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 

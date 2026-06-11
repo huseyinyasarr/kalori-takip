@@ -6,6 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Input } from "../components/ui/Input";
+import { ModalPortal } from "../components/ui/ModalPortal";
 import { useAuth } from "../features/auth/AuthContext";
 import { createFood, deleteFood, updateFood } from "../features/foods/foodService";
 import { createWaterGlass, deleteWaterGlass, updateWaterGlass } from "../features/water/waterService";
@@ -165,72 +166,74 @@ export function FoodsPage() {
       </div>
 
       {foodModal ? (
-        <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6" onClick={() => closeFoodModal()}>
-          <div className="mobile-modal-panel max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-bold text-ink">
-                  {foodModal.food ? "Besini düzenle" : isGlobalModal ? (isAdmin ? "Global besin ekle" : "Global öneri gönder") : "Besin ekle"}
-                </h3>
-                <p className="text-sm text-ink/55">
-                  {isGlobalModal
-                    ? isAdmin
-                      ? "Bu kayıt herkesin görebileceği global katalogda yayınlanır."
-                      : "Bu kayıt admin onayından sonra global katalogda görünür."
-                    : "Bu kayıt yalnızca senin hesabında görünür."}
-                </p>
+        <ModalPortal>
+          <div className="mobile-modal-backdrop fixed inset-0 z-50 grid place-items-center bg-ink/35 px-4 py-6" onClick={() => closeFoodModal()}>
+            <div className="mobile-modal-panel max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-ink">
+                    {foodModal.food ? "Besini düzenle" : isGlobalModal ? (isAdmin ? "Global besin ekle" : "Global öneri gönder") : "Besin ekle"}
+                  </h3>
+                  <p className="text-sm text-ink/55">
+                    {isGlobalModal
+                      ? isAdmin
+                        ? "Bu kayıt herkesin görebileceği global katalogda yayınlanır."
+                        : "Bu kayıt admin onayından sonra global katalogda görünür."
+                      : "Bu kayıt yalnızca senin hesabında görünür."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-ink/50 transition hover:bg-cloud hover:text-ink"
+                  aria-label="Pencereyi kapat"
+                  onClick={() => closeFoodModal()}
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                className="rounded-full p-2 text-ink/50 transition hover:bg-cloud hover:text-ink"
-                aria-label="Pencereyi kapat"
-                onClick={() => closeFoodModal()}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <FoodForm
-              editingFood={foodModal.food}
-              role={role}
-              visibilityMode={isGlobalModal ? "publicOnly" : "privateOnly"}
-              validateBeforeSubmit={(payload, editingFood) => {
-                if (isGlobalModal) return null;
+              <FoodForm
+                editingFood={foodModal.food}
+                role={role}
+                visibilityMode={isGlobalModal ? "publicOnly" : "privateOnly"}
+                validateBeforeSubmit={(payload, editingFood) => {
+                  if (isGlobalModal) return null;
 
-                return hasPrivateFoodNameConflict(foods, payload.name, editingFood)
-                  ? "Bu isimde bir besin özel listende zaten var."
-                  : null;
-              }}
-              onDirtyChange={setHasFoodModalChanges}
-              onCancel={() => closeFoodModal()}
-              onSubmit={async (payload) => {
-                const normalizedPayload = isGlobalModal ? { ...payload, visibility: "public" as const } : { ...payload, visibility: "private" as const };
+                  return hasPrivateFoodNameConflict(foods, payload.name, editingFood)
+                    ? "Bu isimde bir besin özel listende zaten var."
+                    : null;
+                }}
+                onDirtyChange={setHasFoodModalChanges}
+                onCancel={() => closeFoodModal()}
+                onSubmit={async (payload) => {
+                  const normalizedPayload = isGlobalModal ? { ...payload, visibility: "public" as const } : { ...payload, visibility: "private" as const };
 
-                if (foodModal.food) {
-                  await updateFood(user.uid, foodModal.food, normalizedPayload, role);
-                } else {
-                  await createFood(user.uid, normalizedPayload, role);
-                }
-                closeFoodModal(true);
-              }}
-            />
-            {isDiscardConfirmOpen ? (
-              <div className="mobile-modal-backdrop fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-4" onClick={() => setIsDiscardConfirmOpen(false)}>
-                <div className="mobile-modal-panel w-full max-w-sm rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
-                  <h4 className="text-base font-bold text-ink">Kaydedilmemiş değişiklikler var</h4>
-                  <p className="mt-2 text-sm text-ink/60">Formu kapatırsan yazdıkların silinecek.</p>
-                  <div className="mt-4 flex flex-wrap justify-end gap-2">
-                    <Button type="button" variant="ghost" onClick={() => setIsDiscardConfirmOpen(false)}>
-                      Düzenlemeye Devam Et
-                    </Button>
-                    <Button type="button" variant="danger" onClick={() => closeFoodModal(true)}>
-                      Vazgeç ve Kapat
-                    </Button>
+                  if (foodModal.food) {
+                    await updateFood(user.uid, foodModal.food, normalizedPayload, role);
+                  } else {
+                    await createFood(user.uid, normalizedPayload, role);
+                  }
+                  closeFoodModal(true);
+                }}
+              />
+              {isDiscardConfirmOpen ? (
+                <div className="mobile-modal-backdrop fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-4" onClick={() => setIsDiscardConfirmOpen(false)}>
+                  <div className="mobile-modal-panel w-full max-w-sm rounded-lg bg-white p-5 shadow-soft" onClick={(event) => event.stopPropagation()}>
+                    <h4 className="text-base font-bold text-ink">Kaydedilmemiş değişiklikler var</h4>
+                    <p className="mt-2 text-sm text-ink/60">Formu kapatırsan yazdıkların silinecek.</p>
+                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                      <Button type="button" variant="ghost" onClick={() => setIsDiscardConfirmOpen(false)}>
+                        Düzenlemeye Devam Et
+                      </Button>
+                      <Button type="button" variant="danger" onClick={() => closeFoodModal(true)}>
+                        Vazgeç ve Kapat
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">

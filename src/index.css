@@ -133,6 +133,17 @@ textarea {
     background: linear-gradient(155deg, rgba(255, 255, 255, 0.34), transparent 34%);
   }
 
+  .liquid-glass-button::after {
+    content: "";
+    position: absolute;
+    inset: auto 10% 0.125rem;
+    height: 1px;
+    border-radius: 999px;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.28);
+    opacity: 0;
+  }
+
   .liquid-glass-button > * {
     position: relative;
     z-index: 1;
@@ -140,21 +151,32 @@ textarea {
 
   .liquid-glass-button[data-variant="primary"] {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%),
-      linear-gradient(135deg, #3b8f67, #25694b) !important;
-    border-color: rgba(47, 125, 91, 0.28);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 34%),
+      radial-gradient(ellipse at 22% 0%, rgba(255, 255, 255, 0.14), transparent 28%),
+      linear-gradient(135deg, #32845f 0%, #287552 52%, #1f6144 100%) !important;
+    border-color: rgba(28, 91, 63, 0.42);
     color: white;
     box-shadow:
-      0 10px 22px rgba(47, 125, 91, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.34) inset,
-      0 -1px 0 rgba(23, 32, 28, 0.14) inset;
+      0 10px 22px rgba(47, 125, 91, 0.28),
+      0 1px 0 rgba(255, 255, 255, 0.36) inset,
+      0 -1px 0 rgba(11, 54, 36, 0.3) inset;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.14);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .liquid-glass-button[data-variant="primary"]::before,
   .liquid-glass-button[data-variant="danger"]::before {
     inset: 1px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
-    opacity: 0.75;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 38%),
+      radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.22), transparent 36%);
+    opacity: 0.62;
+  }
+
+  .liquid-glass-button[data-variant="primary"]::after,
+  .liquid-glass-button[data-variant="danger"]::after {
+    opacity: 1;
   }
 
   .liquid-glass-button[data-variant="secondary"] {
@@ -172,14 +194,18 @@ textarea {
 
   .liquid-glass-button[data-variant="danger"] {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%),
-      linear-gradient(135deg, #ef7d63, #dc6b51) !important;
-    border-color: rgba(239, 125, 99, 0.28);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 34%),
+      radial-gradient(ellipse at 22% 0%, rgba(255, 255, 255, 0.14), transparent 28%),
+      linear-gradient(135deg, #e56f57 0%, #ce573f 52%, #b6422f 100%) !important;
+    border-color: rgba(181, 65, 47, 0.46);
     color: white;
     box-shadow:
-      0 10px 22px rgba(239, 125, 99, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.34) inset,
-      0 -1px 0 rgba(23, 32, 28, 0.14) inset;
+      0 10px 22px rgba(214, 83, 59, 0.28),
+      0 1px 0 rgba(255, 255, 255, 0.36) inset,
+      0 -1px 0 rgba(105, 31, 22, 0.28) inset;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.14);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .liquid-glass-nav {
@@ -402,12 +428,10 @@ textarea {
   }
 
   .mobile-surface {
-    transform: translateZ(0);
     transition: border-color 220ms var(--mobile-ease), box-shadow 220ms var(--mobile-ease), transform 220ms var(--mobile-ease);
   }
 
   .mobile-surface:focus-within {
-    transform: translateY(-1px);
     box-shadow: 0 20px 46px rgba(23, 32, 28, 0.1);
   }
 
@@ -511,7 +535,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -522,7 +546,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: none;
   }
 }
 
@@ -533,7 +557,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -544,7 +568,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -555,7 +579,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -575,7 +599,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -586,7 +610,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: rotate(0deg) scale(1);
+    transform: none;
   }
 }
 
@@ -606,7 +630,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
 
@@ -618,7 +642,7 @@ textarea {
     transform: scale(1.12);
   }
   100% {
-    transform: scale(1);
+    transform: none;
   }
 }
 
@@ -629,7 +653,7 @@ textarea {
   }
   to {
     opacity: 1;
-    transform: translateY(0) scaleY(1);
+    transform: none;
   }
 }
 
@@ -644,6 +668,6 @@ textarea {
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
